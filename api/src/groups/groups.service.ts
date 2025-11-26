@@ -8,7 +8,15 @@ export class GroupsService {
   constructor(private prisma: PrismaService) {}
 
   create(createGroupDto: CreateGroupDto) {
-    return this.prisma.group.create({ data: createGroupDto });
+    const { name, description, imageUrl } = createGroupDto;
+
+    return this.prisma.group.create({
+      data: {
+        name,
+        description,
+        imgUrl: imageUrl, 
+      },
+    });
   }
 
   async findAll() {
