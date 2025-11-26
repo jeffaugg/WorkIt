@@ -19,6 +19,9 @@ export class User {
   name: string;
 
   @ApiProperty()
+  password: string;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
