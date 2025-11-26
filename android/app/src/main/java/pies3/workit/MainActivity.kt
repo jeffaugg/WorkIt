@@ -29,8 +29,12 @@ import pies3.workit.ui.features.splash.SplashScreen
 import pies3.workit.ui.features.auth.register.RegisterScreen
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import pies3.workit.ui.features.profile.ProfileScreen
+import pies3.workit.ui.features.groups.GroupsScreen
+import pies3.workit.ui.features.post.PostScreen
 
-@AndroidEntryPoint
+
+@AndroidEntryPoint  
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,7 +128,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(BottomBarScreen.Feed.route) { FeedScreen() }
-                        composable(BottomBarScreen.Groups.route) { GroupsScreen() }
+                        composable("groups") { GroupsScreen() }
                         composable(BottomBarScreen.Post.route) { PostScreen() }
                         composable(BottomBarScreen.Profile.route) { ProfileScreen() }
                     }
@@ -143,15 +147,5 @@ fun FeedScreen() {
 
 @Composable
 fun GroupsScreen() {
-    Text("Welcome, User")
-}
-
-@Composable
-fun PostScreen() {
-    Text("Welcome, User")
-}
-
-@Composable
-fun ProfileScreen() {
     Text("Welcome, User")
 }

@@ -22,11 +22,6 @@ import pies3.workit.R
 import pies3.workit.ui.theme.WorkItTheme
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
-import pies3.workit.ui.theme.BackgroundEndGradient
-import pies3.workit.ui.theme.BackgroundStartGradient
-import pies3.workit.ui.theme.Purple80
-import pies3.workit.ui.theme.WorkItDark
-import pies3.workit.ui.theme.WorkItLightGray
 
 @Composable
 fun LoginScreen(
@@ -67,7 +62,7 @@ fun LoginContent(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(BackgroundStartGradient, BackgroundEndGradient)
+                    colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
                 )
             ),
         contentAlignment = Alignment.Center
@@ -125,13 +120,13 @@ fun LoginContent(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WorkItLightGray,
-                        unfocusedContainerColor = WorkItLightGray,
-                        disabledContainerColor = WorkItLightGray,
-                        errorContainerColor = WorkItLightGray,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = WorkItLightGray,
-                        disabledIndicatorColor = WorkItLightGray,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
                         errorIndicatorColor = MaterialTheme.colorScheme.error
                     )
                 )
@@ -149,13 +144,13 @@ fun LoginContent(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WorkItLightGray,
-                        unfocusedContainerColor = WorkItLightGray,
-                        disabledContainerColor = WorkItLightGray,
-                        errorContainerColor = WorkItLightGray,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = WorkItLightGray,
-                        disabledIndicatorColor = WorkItLightGray,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
                         errorIndicatorColor = MaterialTheme.colorScheme.error
                     )
                 )
@@ -165,7 +160,7 @@ fun LoginContent(
                 Button(
                     onClick = onLoginClick,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = WorkItDark),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {

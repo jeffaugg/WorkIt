@@ -2,20 +2,21 @@ package pies3.workit.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val WorkItBlack = Color(0xFF000000)
+val WorkItWhite = Color(0xFFFFFFFF)
+val WorkItBackground = Color(0xFFF5F5F7)
+val WorkItSurfaceCard = Color(0xFFFFFFFF)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val WorkItDarkSurface = Color(0xFF1E1E1E)
 
-val BackgroundStartGradient = Color(0xFFE0E0FF)
-val BackgroundEndGradient = Color(0xFFFFFFFF)
+val WorkItTextPrimary = Color(0xFF000000)
+val WorkItTextSecondary = Color(0xFF717182)
+val WorkItTextInverse = Color(0xFFFFFFFF)
 
-val WorkItBlue = Color(0xFF4285F4)
-val WorkItDark = Color(0xFF0A0A0A)
-val WorkItLightGray = Color(0xFFF3F3F5)
+val StatusGold = Color(0xFFFFD700)
+val StatusGreen = Color(0xFF4CAF50)
+val StatusBlue = Color(0xFF2196F3)
+val StatusRed = Color(0xFFB00020)
 
-val TextSecondaryLight = Color(0xFF717182)
-val TextSecondaryDark = Color(0xFF9E9EA9)
+val BackgroundStartGradient = Color(0xFFFFFFFF)
+val BackgroundEndGradient = Color(0xFFE0E0E0)

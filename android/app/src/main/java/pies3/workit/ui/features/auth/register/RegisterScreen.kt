@@ -4,28 +4,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import pies3.workit.R
-import pies3.workit.ui.theme.WorkItTheme
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import pies3.workit.ui.theme.BackgroundEndGradient
 import pies3.workit.ui.theme.BackgroundStartGradient
-import pies3.workit.ui.theme.WorkItDark
-import pies3.workit.ui.theme.WorkItLightGray
 
 @Composable
 fun RegisterScreen(
@@ -43,9 +36,7 @@ fun RegisterScreen(
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onConfirmPasswordChange = { confirmPassword = it },
-        onRegisterClick = {
-            onRegisterSuccess()
-        },
+        onRegisterClick = onRegisterSuccess,
         onLoginClick = onLoginClick
     )
 }
@@ -99,7 +90,7 @@ fun RegisterContent(
                 Text(
                     text = "WorkIt!",
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -109,6 +100,7 @@ fun RegisterContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+
                 TextField(
                     value = email,
                     onValueChange = onEmailChange,
@@ -118,17 +110,15 @@ fun RegisterContent(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WorkItLightGray,
-                        unfocusedContainerColor = WorkItLightGray,
-                        disabledContainerColor = WorkItLightGray,
-                        errorContainerColor = WorkItLightGray,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = WorkItLightGray,
-                        disabledIndicatorColor = WorkItLightGray,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+
                 TextField(
                     value = password,
                     onValueChange = onPasswordChange,
@@ -139,17 +129,15 @@ fun RegisterContent(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WorkItLightGray,
-                        unfocusedContainerColor = WorkItLightGray,
-                        disabledContainerColor = WorkItLightGray,
-                        errorContainerColor = WorkItLightGray,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = WorkItLightGray,
-                        disabledIndicatorColor = WorkItLightGray,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+
                 TextField(
                     value = confirmPassword,
                     onValueChange = onConfirmPasswordChange,
@@ -160,27 +148,30 @@ fun RegisterContent(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = WorkItLightGray,
-                        unfocusedContainerColor = WorkItLightGray,
-                        disabledContainerColor = WorkItLightGray,
-                        errorContainerColor = WorkItLightGray,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = WorkItLightGray,
-                        disabledIndicatorColor = WorkItLightGray,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
                     )
                 )
+
                 Spacer(modifier = Modifier.height(32.dp))
+
                 Button(
                     onClick = onRegisterClick,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = WorkItDark),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
-                    Text("Criar Conta", color = MaterialTheme.colorScheme.onPrimary)
+                    Text("Criar Conta", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+
                 TextButton(onClick = onLoginClick) {
                     Text(
                         "Já tem uma conta? Entre",
@@ -190,23 +181,5 @@ fun RegisterContent(
                 }
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun RegisterContentPreview() {
-    WorkItTheme {
-        RegisterContent(
-            email = "email@preview.com",
-            password = "password123",
-            confirmPassword = "password123",
-            onEmailChange = {},
-            onPasswordChange = {},
-            onConfirmPasswordChange = {},
-            onRegisterClick = {},
-            onLoginClick = {}
-        )
     }
 }
