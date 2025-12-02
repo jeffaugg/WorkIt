@@ -8,25 +8,27 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  email     String      @unique
+  id        String   @id @default(uuid())
+  email     String   @unique
   name      String
-  password  String     
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  groups    GroupUser[]
+  groups GroupUser[]
+  posts  Post[]
 }
 
 model Group {
-  id          String      @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  imgUrl      String?     @map("img_url")
+  imgUrl      String?   @map("img_url")
   description String?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime?   @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
 
-  users       GroupUser[]
+  users GroupUser[]
+  posts Post[]
 }
 
 model GroupUser {
@@ -39,4 +41,34 @@ model GroupUser {
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@id([userId, groupId])
+}
+
+model Post {
+  id           String       @id @default(uuid())
+  title        String
+  activityType ActivityType @map("type")
+  body         String?
+  imageUrl     String?      @map("image_url")
+  location     String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime?    @updatedAt @map("updated_at")
+
+  userId  String @map("user_id")
+  groupId String @map("group_id")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("posts")
+}
+
+enum ActivityType {
+  RUNNING
+  WALKING
+  CYCLING
+  WEIGHT_TRAINING
+  SWIMMING
+  OTHER
+
+  @@map("activity_type")
 }
