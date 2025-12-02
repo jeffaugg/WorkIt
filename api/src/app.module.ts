@@ -4,9 +4,10 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { AuthGuard } from './auth/auth.guard';
+import { PostsModule } from './posts/groups.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, GroupsModule],
+  imports: [PrismaModule, UsersModule, AuthModule, GroupsModule, PostsModule],
   controllers: [],
   providers: [
     {
