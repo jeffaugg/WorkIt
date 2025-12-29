@@ -1,21 +1,41 @@
 package pies3.workit.ui.features.post
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import pies3.workit.ui.features.post.components.FormDropdown
-import pies3.workit.ui.features.post.components.MediaButton
-import pies3.workit.ui.features.post.components.TipItem
+import coil.compose.AsyncImage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostScreen() {
     var selectedGroup by remember { mutableStateOf("") }
@@ -23,58 +43,65 @@ fun PostScreen() {
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
+    var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var selectedVideo by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3)
+    ) { uris ->
+        selectedImages = uris
+    }
+
+    val videoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        selectedVideo = uri
+    }
+
     val groups = listOf("Corredores da Manhã", "Esquadrão de Força", "Yoga Flow")
     val activities = listOf("Corrida", "Levantamento de Peso", "Yoga", "Ciclismo", "HIIT")
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
-        Text(
-            text = "Compartilhe seu Treino",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface // Branco
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            shape = MaterialTheme.shapes.medium
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text("Nova Publicação", fontWeight = FontWeight.SemiBold)
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
 
-                Text(
-                    text = "Postar Atividade",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Compartilhe seu treino com seus grupos fitness e inspire outros!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                FormDropdown(
-                    label = "Grupo *",
+                ModernDropdown(
+                    label = "Selecionar Grupo",
                     options = groups,
                     selectedOption = selectedGroup,
-                    onOptionSelected = { selectedGroup = it }
+                    onOptionSelected = { selectedGroup = it },
+                    icon = Icons.Default.Groups
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                FormDropdown(
-                    label = "Tipo de Atividade *",
+                ModernDropdown(
+                    label = "Tipo de Atividade",
                     options = activities,
                     selectedOption = activityType,
-                    onOptionSelected = { activityType = it }
+                    onOptionSelected = { activityType = it },
+                    icon = Icons.Default.FitnessCenter
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -85,8 +112,12 @@ fun PostScreen() {
                     label = { Text("Localização") },
                     placeholder = { Text("Onde você treinou?") },
                     leadingIcon = { Icon(Icons.Default.LocationOn, null) },
-                    modifier = Modifier.fillMaxWidth()
-                    // Cores padrão funcionam bem no fundo branco
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -94,61 +125,257 @@ fun PostScreen() {
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descrição *") },
-                    placeholder = { Text("Conte-nos sobre seu treino! Como foi?") },
+                    label = { Text("Descrição") },
+                    placeholder = { Text("Como foi o treino de hoje?") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp),
-                    maxLines = 5
+                        .height(140.dp),
+                    maxLines = 6,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    MediaButton(
-                        text = "Fotos (0/3)",
-                        icon = Icons.Default.Star,
-                        onClick = { },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    MediaButton(
-                        text = "Vídeo (10-15s)",
-                        icon = Icons.Default.PlayArrow,
-                        onClick = { },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = { },
+                Text(
+                    "Adicionar Mídia",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = MaterialTheme.shapes.medium
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Compartilhar Atividade", fontWeight = FontWeight.Bold)
+                    OutlinedButton(
+                        onClick = {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Fotos (${selectedImages.size}/3)")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            videoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (selectedVideo != null) "Vídeo (1)" else "Vídeo")
+                    }
+                }
+
+                if (selectedImages.isNotEmpty() || selectedVideo != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = 4.dp)
+                    ) {
+                        items(selectedImages) { uri ->
+                            MediaPreviewItem(uri = uri) {
+                                selectedImages = selectedImages - uri
+                            }
+                        }
+
+                        if (selectedVideo != null) {
+                            item {
+                                VideoPreviewItem(uri = selectedVideo!!) {
+                                    selectedVideo = null
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = { /* TODO */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text(
+                        "Publicar Atividade",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            TipsSection()
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Dicas para Ótimos Posts",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-        TipItem("1", "Mantenha sua descrição positiva e encorajadora.")
-        TipItem("2", "Inclua recordes pessoais ou conquistas.")
-        TipItem("3", "Adicione fotos que mostrem seu ambiente de treino.")
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ModernDropdown(
+    label: String,
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    icon: ImageVector
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            leadingIcon = { Icon(icon, null) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+            )
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MediaPreviewItem(uri: Uri, onRemove: () -> Unit) {
+    Box(modifier = Modifier.size(100.dp)) {
+        AsyncImage(
+            model = uri,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Gray),
+            contentScale = ContentScale.Crop
+        )
+        RemoveButton(
+            onClick = onRemove,
+            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
+        )
+    }
+}
+
+@Composable
+fun VideoPreviewItem(uri: Uri, onRemove: () -> Unit) {
+    Box(modifier = Modifier.size(100.dp)) {
+        AsyncImage(
+            model = uri,
+            contentDescription = "Vídeo",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black),
+            contentScale = ContentScale.Crop
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                .padding(8.dp)
+        ) {
+            Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+        RemoveButton(
+            onClick = onRemove,
+            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
+        )
+    }
+}
+
+@Composable
+fun RemoveButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(24.dp)
+            .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = "Remover",
+            tint = Color.White,
+            modifier = Modifier.size(14.dp)
+        )
+    }
+}
+
+@Composable
+fun TipsSection() {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lightbulb, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Dicas para um bom post",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            TipText("• Mantenha a descrição positiva e encorajadora.")
+            TipText("• Inclua recordes pessoais ou conquistas.")
+            TipText("• Adicione fotos do seu ambiente de treino.")
+        }
+    }
+}
+
+@Composable
+fun TipText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
 }

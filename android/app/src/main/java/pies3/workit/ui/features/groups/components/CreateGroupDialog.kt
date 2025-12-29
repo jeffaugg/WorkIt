@@ -1,36 +1,52 @@
 package pies3.workit.ui.features.groups.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
 
 @Composable
 fun CreateGroupDialog(
     onDismiss: () -> Unit,
-    onCreate: (String, String, String) -> Unit
+    onCreate: (String, String, Uri?) -> Unit
 ) {
-
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        selectedImageUri = uri
+    }
 
     Dialog(onDismissRequest = onDismiss) {
-
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = MaterialTheme.shapes.large
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
+                modifier = Modifier.padding(24.dp)
             ) {
 
                 Row(
@@ -39,94 +55,119 @@ fun CreateGroupDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Criar Novo Grupo",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
+                        text = "Novo Grupo",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(Icons.Default.Close, null)
                     }
                 }
 
-                Text(
-                    text = "Comece um novo grupo de fitness para se conectar com amigos que compartilham seus interesses.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Spacer(modifier = Modifier.height(24.dp))
+
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nome do Grupo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("Nome do Grupo", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    placeholder = { Text("ex: Corredores da Manhã") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text("Descrição", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    placeholder = { Text("Descreva o foco e os objetivos do seu grupo...") },
+                    label = { Text("Descrição") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                    maxLines = 3
+                        .height(120.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    maxLines = 4
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text("URL da Imagem de Capa (Opcional)", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
-                OutlinedTextField(
-                    value = imageUrl,
-                    onValueChange = { imageUrl = it },
-                    placeholder = { Text("https://...") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
+                Text(
+                    text = "Imagem de Capa",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                if (selectedImageUri == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable {
+                                imagePickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Adicionar foto", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
+                        AsyncImage(
+                            model = selectedImageUri,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = { selectedImageUri = null },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                .size(28.dp)
+                        ) {
+                            Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Cancelar")
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
-
                     Button(
-                        onClick = { onCreate(name, description, imageUrl) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        onClick = { onCreate(name, description, selectedImageUri) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = name.isNotEmpty()
                     ) {
-                        Text("Criar Grupo", color = MaterialTheme.colorScheme.onPrimary)
+                        Text("Criar")
                     }
                 }
             }

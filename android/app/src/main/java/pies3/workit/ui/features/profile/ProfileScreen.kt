@@ -20,8 +20,10 @@ import pies3.workit.ui.features.profile.components.ProfileHeader
 import pies3.workit.ui.features.profile.components.StatCard
 
 @Composable
-fun ProfileScreen() {
-    var isDarkMode by remember { mutableStateOf(false) }
+fun ProfileScreen(
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
     var notifyNewPosts by remember { mutableStateOf(true) }
     var notifyGroupUpdates by remember { mutableStateOf(true) }
     var notifyAchievements by remember { mutableStateOf(true) }
@@ -88,8 +90,10 @@ fun ProfileScreen() {
             NotificationRow(
                 title = "Modo Escuro",
                 subtitle = "Alternar entre temas claro e escuro",
-                checked = isDarkMode,
-                onCheckedChange = { isDarkMode = it }
+                checked = isDarkTheme,
+                onCheckedChange = { isChecked ->
+                    onThemeChange(isChecked)
+                }
             )
         }
 

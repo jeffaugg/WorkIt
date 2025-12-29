@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.material.icons.extended)
 
 
     testImplementation(libs.junit)

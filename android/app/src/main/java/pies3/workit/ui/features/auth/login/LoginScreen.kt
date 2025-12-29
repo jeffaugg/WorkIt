@@ -1,27 +1,27 @@
 package pies3.workit.ui.features.auth.login
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import pies3.workit.R
-import pies3.workit.ui.theme.WorkItTheme
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 
 @Composable
 fun LoginScreen(
@@ -30,170 +30,150 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
     LoginContent(
         email = email,
         password = password,
+        isPasswordVisible = isPasswordVisible,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
-        onLoginClick = {
-            onLoginSuccess()
-        },
-        onRegisterClick = onRegisterClick,
-        onForgotPasswordClick = {}
+        onPasswordVisibilityChange = { isPasswordVisible = !isPasswordVisible },
+        onLoginClick = onLoginSuccess,
+        onRegisterClick = onRegisterClick
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginContent(
     email: String,
     password: String,
+    isPasswordVisible: Boolean,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onPasswordVisibilityChange: () -> Unit,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-
-        Card(
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                Image(
-                    painter = painterResource(id = R.drawable.ic_logo_workit),
-                    contentDescription = "Logo da WorkIt",
-                    modifier = Modifier.size(56.dp)
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "WorkIt!",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Bem-vindo(a) de volta! Faça login na sua conta.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
 
 
+            Spacer(modifier = Modifier.height(48.dp))
 
-                TextField(
-                    value = email,
-                    onValueChange = onEmailChange,
-                    label = { Text("E-mail") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
-                    )
-                )
+            Image(
+                painter = painterResource(id = R.drawable.ic_logo_workit),
+                contentDescription = "WorkIt Logo",
+                modifier = Modifier.size(80.dp)
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Bem-vindo de volta!",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Text(
+                text = "Insira seus dados para acessar",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
+            )
 
 
-                TextField(
-                    value = password,
-                    onValueChange = onPasswordChange,
-                    label = { Text("Senha") },
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                        disabledIndicatorColor = MaterialTheme.colorScheme.surfaceVariant,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Button(
-                    onClick = onLoginClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp)
-                ) {
-                    Text("Entrar", color = MaterialTheme.colorScheme.onPrimary)
+            OutlinedTextField(
+                value = email,
+                onValueChange = onEmailChange,
+                label = { Text("E-mail") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Email, contentDescription = null)
                 }
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                TextButton(onClick = onRegisterClick) {
-                    Text(
-                        "Não tem uma conta? Cadastre-se",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                label = { Text("Senha") },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Lock, contentDescription = null)
+                },
+                trailingIcon = {
+                    IconButton(onClick = onPasswordVisibilityChange) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (isPasswordVisible) "Esconder senha" else "Mostrar senha"
+                        )
+                    }
+                }
+            )
 
-                    )
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                TextButton(onClick = { /* TODO */ }) {
+                    Text(text = "Esqueceu a senha?", style = MaterialTheme.typography.bodyMedium)
                 }
             }
-        }
-    }
-}
 
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-fun LoginContentPreview() {
-    WorkItTheme {
-        LoginContent(
-            email = "email@preview.com",
-            password = "password123",
-            onEmailChange = {},
-            onPasswordChange = {},
-            onLoginClick = {},
-            onRegisterClick = {},
-            onForgotPasswordClick = {}
-        )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onLoginClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = "Entrar",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                modifier = Modifier
+                    .padding(vertical = 24.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Não tem uma conta?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = " Cadastre-se",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onRegisterClick() }
+                )
+            }
+        }
     }
 }

@@ -1,136 +1,175 @@
 package pies3.workit.ui.features.groups.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
+import coil.compose.AsyncImage
 
 data class Group(
     val id: String,
     val name: String,
     val description: String,
     val memberCount: Int,
-    val newPostsCount: Int,
+    val newPostsCount: Int = 0,
     val isAdmin: Boolean = false,
     val imageUrl: String = ""
 )
 
-
 @Composable
 fun GroupCard(
     group: Group,
-    onLeaveClick: (String) -> Unit,
-    onSettingsClick: (String) -> Unit,
+    isMember: Boolean,
+    onActionClick: () -> Unit,
+    onCardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = MaterialTheme.shapes.medium
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCardClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .background(Color.Gray)
+                    .height(100.dp)
             ) {
-                if (group.isAdmin) {
+                if (group.imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = group.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+
+                if (isMember && group.isAdmin) {
                     Surface(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(8.dp),
-                        color = Color.Black.copy(alpha = 0.6f),
-                        shape = MaterialTheme.shapes.small
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = CircleShape
                     ) {
-                        Text(
-                            text = "Admin",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Shield, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Admin", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
                     }
                 }
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
+
                 Text(
                     text = group.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
                     text = group.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
-                    )
+                    Icon(Icons.Default.Group, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${group.memberCount} membros",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Text(
-                        text = "${group.newPostsCount} novas postagens hoje",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+                    Text("${group.memberCount} membros", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    OutlinedButton(
-                        onClick = { onLeaveClick(group.id) },
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sair", color = Color.Black)
-                    }
+                    if (isMember) {
+                        if (group.isAdmin) {
+                            IconButton(onClick = onActionClick) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = "Configurações",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            IconButton(onClick = onActionClick) {
+                                Icon(
+                                    Icons.Default.ExitToApp,
+                                    contentDescription = "Sair do grupo",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
 
-                    IconButton(onClick = { onSettingsClick(group.id) }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Configurações",
-                            tint = Color.Black
-                        )
+                    } else {
+                        Button(
+                            onClick = onActionClick,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Participar do Grupo")
+                        }
                     }
                 }
             }

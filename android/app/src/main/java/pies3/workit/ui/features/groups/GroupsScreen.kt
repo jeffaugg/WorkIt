@@ -5,143 +5,114 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import pies3.workit.ui.features.groups.components.CreateGroupDialog
 import pies3.workit.ui.features.groups.components.Group
 import pies3.workit.ui.features.groups.components.GroupCard
-import pies3.workit.ui.features.groups.components.CreateGroupDialog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen() {
     var showDialog by remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     val myGroups = remember { mutableStateListOf(
-        Group(
-            id = "1",
-            name = "Corredores da Manhã",
-            description = "Grupo de corrida matinal para todos os níveis",
-            memberCount = 24,
-            newPostsCount = 3,
-            isAdmin = true
-        ),
-        Group(
-            id = "2",
-            name = "Esquadrão da Força",
-            description = "Comunidade de levantamento de peso e treino de força",
-            memberCount = 31,
-            newPostsCount = 5,
-            isAdmin = false
-        ),
-        Group(
-            id = "3",
-            name = "Fluxo de Yoga",
-            description = "Foco em movimento consciente e flexibilidade",
-            memberCount = 18,
-            newPostsCount = 2,
-            isAdmin = false
-        ),
-        Group(
-            id = "1",
-            name = "Corredores da Manhã",
-            description = "Grupo de corrida matinal para todos os níveis",
-            memberCount = 24,
-            newPostsCount = 3,
-            isAdmin = true
-        ),
-        Group(
-            id = "2",
-            name = "Esquadrão da Força",
-            description = "Comunidade de levantamento de peso e treino de força",
-            memberCount = 31,
-            newPostsCount = 5,
-            isAdmin = false
-        ),
-        Group(
-            id = "3",
-            name = "Fluxo de Yoga",
-            description = "Foco em movimento consciente e flexibilidade",
-            memberCount = 18,
-            newPostsCount = 2,
-            isAdmin = false
-        ),
-        Group(
-            id = "4",
-            name = "Corredores da Manhã",
-            description = "Grupo de corrida matinal para todos os níveis",
-            memberCount = 24,
-            newPostsCount = 3,
-            isAdmin = true
-        ),
-    ) }
+        Group(id = "1", name = "Corredores da Manhã", description = "Foco em maratonas e 5k.", memberCount = 24, isAdmin = true),
+        Group(id = "2", name = "Esquadrão da Força", description = "Powerlifting e força.", memberCount = 31, isAdmin = false)
+    )}
+
+
+    val discoverGroups = remember { mutableStateListOf(
+        Group(id = "3", name = "Fluxo de Yoga", description = "Movimento consciente.", memberCount = 18, isAdmin = false),
+        Group(id = "4", name = "Calistenia Urbana", description = "Treino de rua e barras.", memberCount = 42, isAdmin = false),
+        Group(id = "5", name = "Clube do Pedal", description = "Ciclismo de estrada.", memberCount = 150, isAdmin = false)
+    )}
 
     if (showDialog) {
         CreateGroupDialog(
             onDismiss = { showDialog = false },
-            onCreate = { name, desc, url ->
-                val newGroup = Group(
-                    id = (myGroups.size + 1).toString(),
-                    name = name,
-                    description = desc,
-                    memberCount = 1,
-                    newPostsCount = 0,
-                    isAdmin = true,
-                    imageUrl = url
-                )
-                myGroups.add(0, newGroup)
+            onCreate = { name, desc, uri ->
+                myGroups.add(0, Group(id = "new", name = name, description = desc, memberCount = 1, isAdmin = true, imageUrl = uri?.toString() ?: ""))
                 showDialog = false
+                selectedTabIndex = 0
             }
         )
     }
 
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Meus Grupos",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Button(
-                onClick = { showDialog = true },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            Column {
+                CenterAlignedTopAppBar(
+                    title = { Text("Comunidade", fontWeight = FontWeight.Bold) },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background
+                    )
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Criar")
+
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Tab(
+                        selected = selectedTabIndex == 0,
+                        onClick = { selectedTabIndex = 0 },
+                        text = { Text("Meus Grupos") },
+                        icon = { Icon(Icons.Default.Group, null) }
+                    )
+                    Tab(
+                        selected = selectedTabIndex == 1,
+                        onClick = { selectedTabIndex = 1 },
+                        text = { Text("Explorar") },
+                        icon = { Icon(Icons.Default.Explore, null) }
+                    )
+                }
             }
-        }
+        },
+        floatingActionButton = {
+            if (selectedTabIndex == 0) {
+                FloatingActionButton(
+                    onClick = { showDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Criar Grupo")
+                }
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+
+        val currentList = if (selectedTabIndex == 0) myGroups else discoverGroups
+        val isMyGroupsTab = selectedTabIndex == 0
 
         LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
+            contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
         ) {
-            items(myGroups) { group ->
+            items(currentList) { group ->
                 GroupCard(
                     group = group,
-                    onLeaveClick = { id ->
+                    isMember = isMyGroupsTab,
+                    onActionClick = {
                     },
-                    onSettingsClick = { id ->
+                    onCardClick = {
                     }
                 )
             }
