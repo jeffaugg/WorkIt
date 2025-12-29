@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GroupSummary {
+export class UserSummary {
   @ApiProperty()
   id: string;
 
@@ -8,25 +8,25 @@ export class GroupSummary {
   name: string;
 }
 
-export class User {
+export class Group {
   @ApiProperty()
   id: string;
-
-  @ApiProperty()
-  email: string;
 
   @ApiProperty()
   name: string;
 
   @ApiProperty()
-  password: string;
+  imageUrl?: string;
+
+  @ApiProperty()
+  description?: string;
 
   @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt?: Date;
 
-  @ApiProperty({ type: () => [GroupSummary], required: false })
-  groups?: GroupSummary[];
+  @ApiProperty({ type: () => [UserSummary], required: false })
+  users?: UserSummary[];
 }
