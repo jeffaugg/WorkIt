@@ -24,7 +24,9 @@ import pies3.workit.ui.features.profile.components.ProfileHeader
 @Composable
 fun ProfileScreen(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    showEditModal: Boolean,
+    onModalShown: () -> Unit
 ) {
     var notifyNewPosts by remember { mutableStateOf(true) }
     var notifyGroupUpdates by remember { mutableStateOf(true) }
@@ -32,8 +34,16 @@ fun ProfileScreen(
     var notifyWeeklyDigest by remember { mutableStateOf(false) }
     var isSheetOpen by rememberSaveable { mutableStateOf(false) }
 
+    if (showEditModal) {
+        LaunchedEffect(Unit) {
+            isSheetOpen = true
+            onModalShown()
+        }
+    }
+
     if (isSheetOpen) {
         EditProfileSheet(
+            isNewUser = showEditModal,
             onDismiss = { isSheetOpen = false },
             onSave = { name, email, description, birthDate, photoUri ->
                 Log.d("ProfileScreen", "Name: $name, Description: $description, Email: $email, Birth Date: $birthDate, Photo Uri: $photoUri")
