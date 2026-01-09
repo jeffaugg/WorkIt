@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import pies3.workit.ui.features.profile.components.NotificationRow
 import pies3.workit.ui.features.profile.components.ProfileHeader
-import pies3.workit.ui.features.profile.components.StatCard
 
 @Composable
 fun ProfileScreen(
@@ -49,7 +48,7 @@ fun ProfileScreen(
             Text(
                 text = "Personalize a aparência do aplicativo",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             NotificationRow(
@@ -66,7 +65,7 @@ fun ProfileScreen(
             Text(
                 text = "Gerencie como você deseja ser notificado sobre atividades em grupo",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -158,9 +157,9 @@ private fun SettingsButton(text: String, icon: ImageVector) {
         contentPadding = PaddingValues(16.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = Color.Gray)
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text, color = Color.Black)
+            Text(text, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
