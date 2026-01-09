@@ -68,8 +68,8 @@ fun AppBottomBar(navController: NavController) {
 
                     selectedTextColor = MaterialTheme.colorScheme.onPrimary,
 
-                    unselectedIconColor = Color.White.copy(alpha = 0.7f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.7f)
+                    unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                 )
             )
         }
