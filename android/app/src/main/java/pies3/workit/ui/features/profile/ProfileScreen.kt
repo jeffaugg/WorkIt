@@ -45,41 +45,6 @@ fun ProfileScreen(
             onEditClick = { /* TODO */ }
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                StatCard(
-                    value = "89",
-                    label = "Treinos Totais",
-                    icon = Icons.Default.Star,
-                    iconColor = Color(0xFFFFD700),
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    value = "12",
-                    label = "Semanas Seguidas",
-                    icon = Icons.Default.DateRange,
-                    iconColor = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                StatCard(
-                    value = "Corrida",
-                    label = "Atividade Favorita",
-                    icon = Icons.Default.Check,
-                    iconColor = Color(0xFF2196F3),
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    value = "3",
-                    label = "Grupos Participando",
-                    icon = Icons.Default.AccountBox,
-                    iconColor = Color.Gray,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
         ProfileSectionCard(title = "Aparência", icon = Icons.Outlined.Build) {
             Text(
                 text = "Personalize a aparência do aplicativo",
