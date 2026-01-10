@@ -30,6 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import pies3.workit.ui.components.AppBottomBar
 import pies3.workit.ui.features.auth.login.LoginScreen
 import pies3.workit.ui.features.auth.register.RegisterScreen
+import pies3.workit.ui.features.feed.FeedScreen
 import pies3.workit.ui.features.groups.GroupsScreen
 import pies3.workit.ui.features.post.PostScreen
 import pies3.workit.ui.features.profile.ProfileScreen
@@ -164,9 +165,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun FeedScreen() {
-    Text("Welcome, User")
 }
