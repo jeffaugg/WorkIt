@@ -21,25 +21,40 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.R
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is LoginUiState.Success -> {
+                onLoginSuccess()
+                viewModel.resetState()
+            }
+            else -> { /* Outros estados são tratados na UI */ }
+        }
+    }
+
     LoginContent(
         email = email,
         password = password,
         isPasswordVisible = isPasswordVisible,
+        uiState = uiState,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onPasswordVisibilityChange = { isPasswordVisible = !isPasswordVisible },
-        onLoginClick = onLoginSuccess,
+        onLoginClick = { viewModel.login(email, password) },
         onRegisterClick = onRegisterClick
     )
 }
@@ -49,14 +64,27 @@ fun LoginContent(
     email: String,
     password: String,
     isPasswordVisible: Boolean,
+    uiState: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordVisibilityChange: () -> Unit,
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState) {
+        if (uiState is LoginUiState.Error) {
+            snackbarHostState.showSnackbar(
+                message = uiState.message,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -144,13 +172,21 @@ fun LoginContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
+                enabled = uiState !is LoginUiState.Loading && email.isNotBlank() && password.isNotBlank()
             ) {
-                Text(
-                    text = "Entrar",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                if (uiState is LoginUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text(
+                        text = "Entrar",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
