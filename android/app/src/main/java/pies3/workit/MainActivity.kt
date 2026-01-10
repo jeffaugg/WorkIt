@@ -20,10 +20,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import pies3.workit.ui.components.AppBottomBar
 import pies3.workit.ui.features.auth.login.LoginScreen
@@ -125,7 +127,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             RegisterScreen(
                                 onRegisterSuccess = {
-                                    navController.navigate(BottomBarScreen.Feed.route) {
+                                    navController.navigate(BottomBarScreen.Profile.createRoute(true)) {
                                         popUpTo(Screen.Login.route) { inclusive = true }
                                     }
                                 },
@@ -138,10 +140,23 @@ class MainActivity : ComponentActivity() {
                         composable("groups") { GroupsScreen() }
                         composable(BottomBarScreen.Post.route) { PostScreen() }
 
-                        composable(BottomBarScreen.Profile.route) {
+                        composable(
+                            route = BottomBarScreen.Profile.route,
+                            arguments = listOf(navArgument("showEditModal") {
+                                type = NavType.BoolType
+                                defaultValue = false
+                            })
+                        ) {
+                            val showEditModal = it.arguments?.getBoolean("showEditModal") ?: false
                             ProfileScreen(
                                 isDarkTheme = isDarkTheme,
-                                onThemeChange = { isDarkTheme = it }
+                                onThemeChange = { isDarkTheme = it },
+                                showEditModal = showEditModal,
+                                onModalShown = {
+                                    navController.currentBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("showEditModal", false)
+                                }
                             )
                         }
                     }

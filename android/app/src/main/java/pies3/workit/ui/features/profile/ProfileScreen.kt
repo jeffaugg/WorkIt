@@ -1,5 +1,6 @@
 package pies3.workit.ui.features.profile
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,24 +10,47 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import pies3.workit.ui.features.profile.components.EditProfileSheet
 import pies3.workit.ui.features.profile.components.NotificationRow
 import pies3.workit.ui.features.profile.components.ProfileHeader
 
 @Composable
 fun ProfileScreen(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    showEditModal: Boolean,
+    onModalShown: () -> Unit
 ) {
     var notifyNewPosts by remember { mutableStateOf(true) }
     var notifyGroupUpdates by remember { mutableStateOf(true) }
     var notifyAchievements by remember { mutableStateOf(true) }
     var notifyWeeklyDigest by remember { mutableStateOf(false) }
+    var isSheetOpen by rememberSaveable { mutableStateOf(false) }
+
+    if (showEditModal) {
+        LaunchedEffect(Unit) {
+            isSheetOpen = true
+            onModalShown()
+        }
+    }
+
+    if (isSheetOpen) {
+        EditProfileSheet(
+            isNewUser = showEditModal,
+            onDismiss = { isSheetOpen = false },
+            onSave = { name, email, description, birthDate, photoUri ->
+                Log.d("ProfileScreen", "Name: $name, Description: $description, Email: $email, Birth Date: $birthDate, Photo Uri: $photoUri")
+                isSheetOpen = false
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -39,9 +63,10 @@ fun ProfileScreen(
         ProfileHeader(
             name = "Alex Thompson",
             email = "alex.thompson@email.com",
+            description = "Corredor, amante dos esportes!",
             memberSince = "Membro desde março de 2024",
             initials = "AT",
-            onEditClick = { /* TODO */ }
+            onEditClick = { isSheetOpen = true }
         )
 
         ProfileSectionCard(title = "Aparência", icon = Icons.Outlined.Build) {

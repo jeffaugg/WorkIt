@@ -32,10 +32,12 @@ sealed class BottomBarScreen(
     )
 
     object Profile : BottomBarScreen(
-        route = "profile",
+        route = "profile?showEditModal={showEditModal}",
         label = "Profile",
         icon = Icons.Default.AccountCircle
-    )
+    ) {
+        fun createRoute(showEditModal: Boolean) = "profile?showEditModal=$showEditModal"
+    }
 }
 
 

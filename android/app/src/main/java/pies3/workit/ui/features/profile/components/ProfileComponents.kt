@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 fun ProfileHeader(
     name: String,
     email: String,
+    description: String,
     memberSince: String,
     initials: String,
     onEditClick: () -> Unit
@@ -50,6 +51,13 @@ fun ProfileHeader(
 
         Text(
             text = email,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
