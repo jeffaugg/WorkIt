@@ -27,4 +27,13 @@ class GroupsRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getGroupById(groupId: String): Result<GroupListResponse> {
+        return try {
+            val response = groupApi.getGroupById(groupId)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
