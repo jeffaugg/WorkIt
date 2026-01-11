@@ -1,6 +1,6 @@
 package pies3.workit.ui.features.groups
 
-import android.util.Base64
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import pies3.workit.data.dto.group.CreateGroupResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.GroupsRepository
@@ -28,31 +27,29 @@ class GroupsViewModel @Inject constructor(
 
     fun createGroup(name: String, description: String?, imageUrl: String?) {
         viewModelScope.launch {
-            _createGroupState.value = CreateGroupUiState.Loading
             try {
+                _createGroupState.value = CreateGroupUiState.Loading
+
                 val token = tokenManager.getToken()
+
                 if (token == null) {
+                    Log.e("GroupsViewModel", "Token é null - usuário não autenticado")
                     _createGroupState.value = CreateGroupUiState.Error("Usuário não autenticado")
                     return@launch
                 }
 
-                val result = groupsRepository.createGroup(
-                    name = name,
-                    description = description,
-                    imageUrl = imageUrl,
-                )
+                val result = groupsRepository.createGroup(name, description, imageUrl)
 
-                if (result.isSuccess) {
-                    _createGroupState.value = CreateGroupUiState.Success(result.getOrNull()!!)
-                } else {
-                    _createGroupState.value = CreateGroupUiState.Error(
-                        result.exceptionOrNull()?.message ?: "Erro ao criar grupo"
-                    )
+                _createGroupState.value = when {
+                    result.isSuccess -> CreateGroupUiState.Success(result.getOrThrow())
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao criar grupo: ${result.exceptionOrNull()?.message}")
+                        CreateGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar grupo")
+                    }
                 }
             } catch (e: Exception) {
-                _createGroupState.value = CreateGroupUiState.Error(
-                    e.message ?: "Erro desconhecido"
-                )
+                Log.e("GroupsViewModel", "Exception ao criar grupo", e)
+                _createGroupState.value = CreateGroupUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }
