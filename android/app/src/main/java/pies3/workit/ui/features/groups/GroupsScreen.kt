@@ -28,10 +28,13 @@ fun GroupsScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     val createGroupState by viewModel.createGroupState.collectAsState()
-    val groupsState by viewModel.groupsState.collectAsState()
+    val myGroupsState by viewModel.myGroupsState.collectAsState()
+    val allGroupsState by viewModel.allGroupsState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    val currentGroupsState = if (selectedTabIndex == 0) myGroupsState else allGroupsState
 
     if (showDialog) {
         CreateGroupDialog(
@@ -119,7 +122,7 @@ fun GroupsScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
-        when (val state = groupsState) {
+        when (val state = currentGroupsState) {
             is GroupsUiState.Loading -> {
                 Box(
                     modifier = Modifier
@@ -144,14 +147,21 @@ fun GroupsScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadGroups() }) {
+                        Button(onClick = {
+                            if (selectedTabIndex == 0) {
+                                viewModel.loadMyGroups()
+                            } else {
+                                viewModel.loadAllGroups()
+                            }
+                        }) {
                             Text("Tentar novamente")
                         }
                     }
                 }
             }
             is GroupsUiState.Success -> {
-                val allGroups = state.groups
+                val groups = state.groups
+                val isMember = selectedTabIndex == 0
 
                 LazyColumn(
                     modifier = Modifier
@@ -161,7 +171,7 @@ fun GroupsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
                 ) {
-                    if (allGroups.isEmpty()) {
+                    if (groups.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -180,7 +190,7 @@ fun GroupsScreen(
                             }
                         }
                     } else {
-                        items(allGroups) { group ->
+                        items(groups) { group ->
                             GroupCard(
                                 group = Group(
                                     id = group.id,
@@ -190,7 +200,7 @@ fun GroupsScreen(
                                     isAdmin = false, // TODO: verificar se o usuário é admin
                                     imageUrl = group.imageUrl ?: ""
                                 ),
-                                isMember = selectedTabIndex == 0,
+                                isMember = isMember,
                                 onActionClick = {},
                                 onCardClick = {}
                             )

@@ -12,32 +12,79 @@ import pies3.workit.data.dto.group.CreateGroupResponse
 import pies3.workit.data.dto.group.GroupListResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.GroupsRepository
+import pies3.workit.data.repository.UserRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class GroupsViewModel @Inject constructor(
     private val groupsRepository: GroupsRepository,
+    private val userRepository: UserRepository,
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _createGroupState = MutableStateFlow<CreateGroupUiState>(CreateGroupUiState.Idle)
     val createGroupState: StateFlow<CreateGroupUiState> = _createGroupState.asStateFlow()
 
-    private val _groupsState = MutableStateFlow<GroupsUiState>(GroupsUiState.Loading)
-    val groupsState: StateFlow<GroupsUiState> = _groupsState.asStateFlow()
+    private val _myGroupsState = MutableStateFlow<GroupsUiState>(GroupsUiState.Loading)
+    val myGroupsState: StateFlow<GroupsUiState> = _myGroupsState.asStateFlow()
+
+    private val _allGroupsState = MutableStateFlow<GroupsUiState>(GroupsUiState.Loading)
+    val allGroupsState: StateFlow<GroupsUiState> = _allGroupsState.asStateFlow()
 
     init {
-        loadGroups()
+        loadMyGroups()
+        loadAllGroups()
     }
 
-    fun loadGroups() {
+    fun loadMyGroups() {
         viewModelScope.launch {
             try {
-                _groupsState.value = GroupsUiState.Loading
+                _myGroupsState.value = GroupsUiState.Loading
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    _myGroupsState.value = GroupsUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val userResult = userRepository.getUserById(userId)
+
+                if (userResult.isFailure) {
+                    Log.e("GroupsViewModel", "Erro ao buscar usuário: ${userResult.exceptionOrNull()?.message}")
+                    _myGroupsState.value = GroupsUiState.Error(
+                        userResult.exceptionOrNull()?.message ?: "Erro ao carregar meus grupos"
+                    )
+                    return@launch
+                }
+
+                val user = userResult.getOrThrow()
+
+                val groupsDetails = mutableListOf<GroupListResponse>()
+
+                for (userGroup in user.groups) {
+                    val groupResult = groupsRepository.getGroupById(userGroup.id)
+                    if (groupResult.isSuccess) {
+                        groupsDetails.add(groupResult.getOrThrow())
+                    }
+                }
+
+                _myGroupsState.value = GroupsUiState.Success(groupsDetails)
+
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao carregar meus grupos", e)
+                _myGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    fun loadAllGroups() {
+        viewModelScope.launch {
+            try {
+                _allGroupsState.value = GroupsUiState.Loading
 
                 val result = groupsRepository.getGroups()
 
-                _groupsState.value = when {
+                _allGroupsState.value = when {
                     result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
                     else -> {
                         Log.e("GroupsViewModel", "Erro ao carregar grupos: ${result.exceptionOrNull()?.message}")
@@ -46,7 +93,7 @@ class GroupsViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("GroupsViewModel", "Exception ao carregar grupos", e)
-                _groupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+                _allGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }
@@ -68,7 +115,8 @@ class GroupsViewModel @Inject constructor(
 
                 _createGroupState.value = when {
                     result.isSuccess -> {
-                        loadGroups() // Recarrega a lista após criar
+                       loadMyGroups()
+                        loadAllGroups()
                         CreateGroupUiState.Success(result.getOrThrow())
                     }
                     else -> {
