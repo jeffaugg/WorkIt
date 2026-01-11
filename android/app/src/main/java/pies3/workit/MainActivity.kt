@@ -31,6 +31,7 @@ import pies3.workit.ui.components.AppBottomBar
 import pies3.workit.ui.features.auth.login.LoginScreen
 import pies3.workit.ui.features.auth.register.RegisterScreen
 import pies3.workit.ui.features.feed.FeedScreen
+import pies3.workit.ui.features.feed.GroupFeedScreen
 import pies3.workit.ui.features.groups.GroupsScreen
 import pies3.workit.ui.features.post.PostScreen
 import pies3.workit.ui.features.profile.ProfileScreen
@@ -138,7 +139,28 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(BottomBarScreen.Feed.route) { FeedScreen() }
-                        composable("groups") { GroupsScreen() }
+                        composable("groups") {
+                            GroupsScreen(
+                                onGroupClick = { groupId, groupName ->
+                                    navController.navigate(Screen.GroupFeed.createRoute(groupId, groupName))
+                                }
+                            )
+                        }
+                        composable(
+                            route = Screen.GroupFeed.route,
+                            arguments = listOf(
+                                navArgument("groupId") { type = NavType.StringType },
+                                navArgument("groupName") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
+                            val groupName = backStackEntry.arguments?.getString("groupName") ?: ""
+                            GroupFeedScreen(
+                                groupId = groupId,
+                                groupName = groupName,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
                         composable("post") {
                             PostScreen(
                                 onNavigateBack = { navController.popBackStack() }

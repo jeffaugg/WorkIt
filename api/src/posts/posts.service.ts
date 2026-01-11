@@ -181,4 +181,52 @@ export class PostsService {
   remove(id: string) {
     return this.prisma.post.delete({ where: { id } });
   }
+
+  async findByGroup(groupId: string) {
+    const posts = await this.prisma.post.findMany({
+      where: { groupId },
+      include: {
+        user: true,
+        group: {
+          include: {
+            users: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      activityType: post.activityType,
+      body: post.body ?? null,
+      imageUrl: post.imageUrl ?? null,
+      location: post.location ?? null,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt ?? null,
+      user: {
+        id: post.user.id,
+        name: post.user.name,
+      },
+      group: {
+        id: post.group.id,
+        name: post.group.name,
+        imageUrl: post.group.imgUrl ?? null,
+        description: post.group.description ?? null,
+        createdAt: post.group.createdAt,
+        updatedAt: post.group.updatedAt ?? null,
+        users: post.group.users.map((gu) => ({
+          id: gu.user.id,
+          name: gu.user.name,
+        })),
+      },
+    }));
+  }
 }

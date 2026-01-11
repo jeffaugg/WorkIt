@@ -28,6 +28,11 @@ export class PostsController {
     return this.postsService.findAll();
   }
 
+  @Get('group/:groupId')
+  findByGroup(@Param('groupId') groupId: string) {
+    return this.postsService.findByGroup(groupId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(id);

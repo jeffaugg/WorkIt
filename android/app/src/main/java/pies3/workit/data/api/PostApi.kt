@@ -6,6 +6,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface PostApi {
     @POST("posts")
@@ -13,4 +14,7 @@ interface PostApi {
 
     @GET("posts")
     suspend fun getPosts(): Response<List<PostResponse>>
+
+    @GET("posts/group/{groupId}")
+    suspend fun getPostsByGroup(@Path("groupId") groupId: String): Response<List<PostResponse>>
 }

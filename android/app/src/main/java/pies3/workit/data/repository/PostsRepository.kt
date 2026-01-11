@@ -53,4 +53,18 @@ class PostsRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getPostsByGroup(groupId: String): Result<List<PostResponse>> {
+        return try {
+            val response = postApi.getPostsByGroup(groupId)
+            
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Erro ao carregar publicações do grupo"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -22,7 +22,8 @@ import pies3.workit.ui.features.groups.components.GroupCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
-    viewModel: GroupsViewModel = hiltViewModel()
+    viewModel: GroupsViewModel = hiltViewModel(),
+    onGroupClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -229,7 +230,7 @@ fun GroupsScreen(
                                         viewModel.joinGroup(group.id)
                                     }
                                 },
-                                onCardClick = {},
+                                onCardClick = { onGroupClick(group.id, group.name) },
                                 isLoading = isJoining
                             )
                         }
