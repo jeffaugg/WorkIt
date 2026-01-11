@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -61,13 +62,17 @@ import java.util.Locale
 @Composable
 fun EditProfileSheet(
     isNewUser: Boolean,
+    initialName: String = "",
+    initialEmail: String = "",
+    initialDescription: String = "",
+    initialBirthDate: String = "18/12/2000",
     onDismiss: () -> Unit,
     onSave: (name: String, email: String, description: String, birthDate: String, photoUri: Uri?) -> Unit
 ) {
-    var name by rememberSaveable { mutableStateOf("Alex Thompson") }
-    var email by rememberSaveable { mutableStateOf("alex.thompson@email.com") }
-    var description by rememberSaveable { mutableStateOf("") }
-    var birthDate by rememberSaveable { mutableStateOf("01/01/1990") }
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    var email by rememberSaveable { mutableStateOf(initialEmail) }
+    var description by rememberSaveable { mutableStateOf(initialDescription) }
+    var birthDate by rememberSaveable { mutableStateOf(initialBirthDate) }
     var selectedPhotoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var isDatePickerVisible by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -108,7 +113,7 @@ fun EditProfileSheet(
         scrimColor = if (isNewUser) Color.Black.copy(alpha = 0.6f) else MaterialTheme.colorScheme.scrim,
     ) {
 
-        SnackbarHost(hostState = snackbarHostState) { SnackbarHost(hostState = snackbarHostState) }
+        SnackbarHost(hostState = snackbarHostState)
 
         Column(
             modifier = Modifier
@@ -144,6 +149,7 @@ fun EditProfileSheet(
                 leadingIcon = { Icon(Icons.Default.Person, null) },
                 modifier = Modifier.fillMaxWidth()
             )
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -151,6 +157,7 @@ fun EditProfileSheet(
                 leadingIcon = { Icon(Icons.Default.Email, null) },
                 modifier = Modifier.fillMaxWidth()
             )
+
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -162,19 +169,28 @@ fun EditProfileSheet(
                 placeholder = { Text("Adicione uma descrição!") },
                 singleLine = false
             )
-            OutlinedTextField(
-                value = birthDate,
-                onValueChange = { },
-                label = { Text("Data de Nascimento") },
-                leadingIcon = { Icon(Icons.Default.DateRange, null) },
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { isDatePickerVisible = true },
-                readOnly = true,
-            )
+                    .clickable { isDatePickerVisible = true }
+            ) {
+                OutlinedTextField(
+                    value = birthDate,
+                    onValueChange = { },
+                    label = { Text("Data de Nascimento") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
 
             Button(
                 onClick = {

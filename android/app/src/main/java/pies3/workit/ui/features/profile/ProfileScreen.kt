@@ -33,6 +33,7 @@ fun ProfileScreen(
 ) {
     val logoutState by viewModel.logoutState.collectAsState()
     val profileState by viewModel.profileState.collectAsState()
+    val updateState by viewModel.updateState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var notifyNewPost by rememberSaveable { mutableStateOf(true) }
@@ -62,12 +63,33 @@ fun ProfileScreen(
         }
     }
 
+    LaunchedEffect(updateState) {
+        when (val state = updateState) {
+            is UpdateProfileState.Success -> {
+                snackbarHostState.showSnackbar("Perfil atualizado com sucesso!")
+                viewModel.resetUpdateState()
+            }
+            is UpdateProfileState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.resetUpdateState()
+            }
+            else -> {}
+        }
+    }
+
     if (isSheetOpen) {
+        val user = (profileState as? ProfileState.Success)?.user
+
         EditProfileSheet(
             isNewUser = showEditModal,
+            initialName = user?.name ?: "",
+            initialEmail = user?.email ?: "",
+            initialDescription = "",
+            initialBirthDate = "18/12/2000",
             onDismiss = { isSheetOpen = false },
             onSave = { name, email, description, birthDate, photoUri ->
                 Log.d("ProfileScreen", "Name: $name, Description: $description, Email: $email, Birth Date: $birthDate, Photo Uri: $photoUri")
+                viewModel.updateProfile(name, email, description, birthDate, photoUri)
                 isSheetOpen = false
             }
         )
