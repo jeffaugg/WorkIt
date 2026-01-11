@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,13 +32,9 @@ class TokenManager @Inject constructor(
     }
 
     suspend fun getToken(): String? {
-        var token: String? = null
-        context.dataStore.data.map { preferences ->
+        return context.dataStore.data.map { preferences ->
             preferences[tokenKey]
-        }.collect {
-            token = it
-        }
-        return token
+        }.first()
     }
 
     suspend fun clearToken() {
