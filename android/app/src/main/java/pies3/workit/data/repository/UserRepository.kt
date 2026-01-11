@@ -15,4 +15,8 @@ class UserRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getCurrentUser(userId: String): Result<UserResponse> {
+        return getUserById(userId)
+    }
 }
