@@ -1,9 +1,9 @@
 package pies3.workit.data.api
 
-import pies3.workit.data.dto.LoginRequest
-import pies3.workit.data.dto.LoginResponse
-import pies3.workit.data.dto.SignupRequest
-import pies3.workit.data.dto.SignupResponse
+import pies3.workit.data.dto.auth.LoginRequest
+import pies3.workit.data.dto.auth.LoginResponse
+import pies3.workit.data.dto.auth.SignupRequest
+import pies3.workit.data.dto.auth.SignupResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 

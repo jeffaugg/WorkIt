@@ -1,10 +1,10 @@
 package pies3.workit.data.repository
 
 import pies3.workit.data.api.AuthApi
-import pies3.workit.data.dto.LoginRequest
-import pies3.workit.data.dto.LoginResponse
-import pies3.workit.data.dto.SignupRequest
-import pies3.workit.data.dto.SignupResponse
+import pies3.workit.data.dto.auth.LoginRequest
+import pies3.workit.data.dto.auth.LoginResponse
+import pies3.workit.data.dto.auth.SignupRequest
+import pies3.workit.data.dto.auth.SignupResponse
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(

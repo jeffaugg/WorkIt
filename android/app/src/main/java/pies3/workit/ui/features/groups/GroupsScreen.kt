@@ -9,47 +9,96 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.groups.components.CreateGroupDialog
 import pies3.workit.ui.features.groups.components.Group
 import pies3.workit.ui.features.groups.components.GroupCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupsScreen() {
+fun GroupsScreen(
+    viewModel: GroupsViewModel = hiltViewModel()
+) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
+    val createGroupState by viewModel.createGroupState.collectAsState()
+    val myGroupsState by viewModel.myGroupsState.collectAsState()
+    val allGroupsState by viewModel.allGroupsState.collectAsState()
+    val joinGroupState by viewModel.joinGroupState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    val myGroups = remember { mutableStateListOf(
-        Group(id = "1", name = "Corredores da Manhã", description = "Foco em maratonas e 5k.", memberCount = 24, isAdmin = true),
-        Group(id = "2", name = "Esquadrão da Força", description = "Powerlifting e força.", memberCount = 31, isAdmin = false)
-    )}
-
-
-    val discoverGroups = remember { mutableStateListOf(
-        Group(id = "3", name = "Fluxo de Yoga", description = "Movimento consciente.", memberCount = 18, isAdmin = false),
-        Group(id = "4", name = "Calistenia Urbana", description = "Treino de rua e barras.", memberCount = 42, isAdmin = false),
-        Group(id = "5", name = "Clube do Pedal", description = "Ciclismo de estrada.", memberCount = 150, isAdmin = false)
-    )}
+    val currentGroupsState = if (selectedTabIndex == 0) myGroupsState else allGroupsState
 
     if (showDialog) {
         CreateGroupDialog(
-            onDismiss = { showDialog = false },
+            onDismiss = {
+                if (createGroupState !is CreateGroupUiState.Loading) {
+                    showDialog = false
+                }
+            },
             onCreate = { name, desc, uri ->
-                myGroups.add(0, Group(id = "new", name = name, description = desc, memberCount = 1, isAdmin = true, imageUrl = uri?.toString() ?: ""))
+                viewModel.createGroup(name, desc, null)
+            },
+            isLoading = createGroupState is CreateGroupUiState.Loading
+        )
+    }
+
+    LaunchedEffect(createGroupState) {
+        when (createGroupState) {
+            is CreateGroupUiState.Success -> {
+                val newGroup = (createGroupState as CreateGroupUiState.Success).group
                 showDialog = false
                 selectedTabIndex = 0
+                viewModel.resetCreateGroupState()
+                snackbarHostState.showSnackbar(
+                    message = "Grupo '${newGroup.name}' criado com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
             }
-        )
+            is CreateGroupUiState.Error -> {
+                val errorMessage = (createGroupState as CreateGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetCreateGroupState()
+            }
+            else -> { /* Idle ou Loading */ }
+        }
+    }
+
+    LaunchedEffect(joinGroupState) {
+        when (joinGroupState) {
+            is JoinGroupUiState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Você entrou no grupo com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetJoinGroupState()
+            }
+            is JoinGroupUiState.Error -> {
+                val errorMessage = (joinGroupState as JoinGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetJoinGroupState()
+            }
+            else -> { /* Idle ou Loading */ }
+        }
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
@@ -95,26 +144,97 @@ fun GroupsScreen() {
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
-        val currentList = if (selectedTabIndex == 0) myGroups else discoverGroups
-        val isMyGroupsTab = selectedTabIndex == 0
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
-        ) {
-            items(currentList) { group ->
-                GroupCard(
-                    group = group,
-                    isMember = isMyGroupsTab,
-                    onActionClick = {
-                    },
-                    onCardClick = {
+        when (val state = currentGroupsState) {
+            is GroupsUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is GroupsUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            if (selectedTabIndex == 0) {
+                                viewModel.loadMyGroups()
+                            } else {
+                                viewModel.loadAllGroups()
+                            }
+                        }) {
+                            Text("Tentar novamente")
+                        }
                     }
-                )
+                }
+            }
+            is GroupsUiState.Success -> {
+                val groups = state.groups
+                val isMember = selectedTabIndex == 0
+                val isJoining = joinGroupState is JoinGroupUiState.Loading
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
+                ) {
+                    if (groups.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (selectedTabIndex == 0)
+                                        "Você ainda não está em nenhum grupo"
+                                    else
+                                        "Nenhum grupo disponível",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        items(groups) { group ->
+                            GroupCard(
+                                group = Group(
+                                    id = group.id,
+                                    name = group.name,
+                                    description = group.description ?: "",
+                                    memberCount = group.users.size,
+                                    isAdmin = false, // TODO: verificar se o usuário é admin
+                                    imageUrl = group.imageUrl ?: ""
+                                ),
+                                isMember = isMember,
+                                onActionClick = {
+                                    if (!isMember) {
+                                        viewModel.joinGroup(group.id)
+                                    }
+                                },
+                                onCardClick = {},
+                                isLoading = isJoining
+                            )
+                        }
+                    }
+                }
             }
         }
     }

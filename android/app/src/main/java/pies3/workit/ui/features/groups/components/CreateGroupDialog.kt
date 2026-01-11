@@ -27,7 +27,8 @@ import coil.compose.AsyncImage
 @Composable
 fun CreateGroupDialog(
     onDismiss: () -> Unit,
-    onCreate: (String, String, Uri?) -> Unit
+    onCreate: (String, String, Uri?) -> Unit,
+    isLoading: Boolean = false
 ) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -162,12 +163,22 @@ fun CreateGroupDialog(
                     }
 
                     Button(
-                        onClick = { onCreate(name, description, selectedImageUri) },
+                        onClick = {
+                            onCreate(name, description, selectedImageUri)
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = name.isNotEmpty()
+                        enabled = name.isNotEmpty() && !isLoading
                     ) {
-                        Text("Criar")
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Criar")
+                        }
                     }
                 }
             }
