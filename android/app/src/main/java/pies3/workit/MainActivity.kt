@@ -139,7 +139,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(BottomBarScreen.Feed.route) { FeedScreen() }
                         composable("groups") { GroupsScreen() }
-                        composable(BottomBarScreen.Post.route) { PostScreen() }
+                        composable("post") {
+                            PostScreen(
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
 
                         composable(
                             route = BottomBarScreen.Profile.route,

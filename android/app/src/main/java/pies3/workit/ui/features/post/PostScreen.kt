@@ -34,12 +34,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pies3.workit.ui.features.groups.GroupsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostScreen() {
-    var selectedGroup by remember { mutableStateOf("") }
+fun PostScreen(
+    onNavigateBack: () -> Unit,
+    createPostViewModel: CreatePostViewModel = hiltViewModel(),
+    groupsViewModel: GroupsViewModel = hiltViewModel()
+) {
+    val createPostState by createPostViewModel.createPostState.collectAsStateWithLifecycle()
+    val myGroupsState by groupsViewModel.myGroupsState.collectAsStateWithLifecycle()
+
+    var selectedGroup by remember { mutableStateOf<String?>(null) }
+    var selectedGroupName by remember { mutableStateOf("") }
     var activityType by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
@@ -58,8 +70,29 @@ fun PostScreen() {
         selectedVideo = uri
     }
 
-    val groups = listOf("Corredores da Manhã", "Esquadrão de Força", "Yoga Flow")
-    val activities = listOf("Corrida", "Levantamento de Peso", "Yoga", "Ciclismo", "HIIT")
+    val activityTypeMap = mapOf(
+        "Corrida" to "RUNNING",
+        "Caminhada" to "WALKING",
+        "Ciclismo" to "CYCLING",
+        "Levantamento de Peso" to "WEIGHT_TRAINING",
+        "Natação" to "SWIMMING",
+        "Yoga" to "OTHER",
+        "HIIT" to "OTHER",
+        "Boxe" to "OTHER",
+        "CrossFit" to "OTHER"
+    )
+
+    val activities = listOf("Corrida", "Caminhada", "Ciclismo", "Levantamento de Peso", "Natação", "Yoga", "HIIT", "Boxe", "CrossFit")
+
+    LaunchedEffect(createPostState) {
+        when (createPostState) {
+            is CreatePostUiState.Success -> {
+                createPostViewModel.resetState()
+                onNavigateBack()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -81,18 +114,36 @@ fun PostScreen() {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ModernDropdown(
-                    label = "Selecionar Grupo",
-                    options = groups,
-                    selectedOption = selectedGroup,
-                    onOptionSelected = { selectedGroup = it },
-                    icon = Icons.Default.Groups
-                )
+                when (val state = myGroupsState) {
+                    is pies3.workit.ui.features.groups.GroupsUiState.Success -> {
+                        val groupOptions = state.groups.map { it.name }
+                        val groupIdMap = state.groups.associate { it.name to it.id }
+
+                        ModernDropdown(
+                            label = "Selecionar Grupo",
+                            options = groupOptions,
+                            selectedOption = selectedGroupName,
+                            onOptionSelected = { name ->
+                                selectedGroupName = name
+                                selectedGroup = groupIdMap[name]
+                            },
+                            icon = Icons.Default.Groups
+                        )
+                    }
+                    is pies3.workit.ui.features.groups.GroupsUiState.Error -> {
+                        Text(
+                            text = "Erro ao carregar grupos",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    else -> {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -102,6 +153,21 @@ fun PostScreen() {
                     selectedOption = activityType,
                     onOptionSelected = { activityType = it },
                     icon = Icons.Default.FitnessCenter
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título") },
+                    placeholder = { Text("Ex: Treino matinal incrível!") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -203,10 +269,34 @@ fun PostScreen() {
                     }
                 }
 
+                if (createPostState is CreatePostUiState.Error) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = (createPostState as CreatePostUiState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = {
+                        selectedGroup?.let { groupId ->
+                            val mappedActivityType = activityTypeMap[activityType] ?: "OTHER"
+                            createPostViewModel.createPost(
+                                title = title.ifBlank { activityType },
+                                activityType = mappedActivityType,
+                                body = description.ifBlank { null },
+                                imageUrl = null,
+                                location = location.ifBlank { null },
+                                groupId = groupId
+                            )
+                        }
+                    },
+                    enabled = createPostState !is CreatePostUiState.Loading &&
+                            activityType.isNotBlank() &&
+                            selectedGroup != null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -215,11 +305,18 @@ fun PostScreen() {
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text(
-                        "Publicar Atividade",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (createPostState is CreatePostUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            "Publicar Atividade",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
