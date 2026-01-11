@@ -232,23 +232,23 @@ fun PostCard(post: PostResponse) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (!post.location.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = post.location,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+//            if (!post.location.isNullOrEmpty()) {
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Row(verticalAlignment = Alignment.CenterVertically) {
+//                    Icon(
+//                        Icons.Default.LocationOn,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(14.dp),
+//                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                    Spacer(modifier = Modifier.width(4.dp))
+//                    Text(
+//                        text = post.location,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                }
+//            }
 
             if (!post.body.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
