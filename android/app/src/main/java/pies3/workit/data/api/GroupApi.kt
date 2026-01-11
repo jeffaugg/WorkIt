@@ -6,6 +6,7 @@ import pies3.workit.data.dto.group.GroupListResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface GroupApi{
     @POST("groups")
@@ -13,4 +14,7 @@ interface GroupApi{
 
     @GET("groups")
     suspend fun getGroups(): List<GroupListResponse>
+
+    @GET("groups/{id}")
+    suspend fun getGroupById(@Path("id") id: String): GroupListResponse
 }
