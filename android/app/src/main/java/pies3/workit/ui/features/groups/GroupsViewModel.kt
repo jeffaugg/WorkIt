@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import pies3.workit.data.dto.group.CreateGroupResponse
+import pies3.workit.data.dto.group.GroupListResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.GroupsRepository
 import javax.inject.Inject
@@ -24,6 +25,31 @@ class GroupsViewModel @Inject constructor(
 
     private val _groupsState = MutableStateFlow<GroupsUiState>(GroupsUiState.Loading)
     val groupsState: StateFlow<GroupsUiState> = _groupsState.asStateFlow()
+
+    init {
+        loadGroups()
+    }
+
+    fun loadGroups() {
+        viewModelScope.launch {
+            try {
+                _groupsState.value = GroupsUiState.Loading
+
+                val result = groupsRepository.getGroups()
+
+                _groupsState.value = when {
+                    result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao carregar grupos: ${result.exceptionOrNull()?.message}")
+                        GroupsUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao carregar grupos")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao carregar grupos", e)
+                _groupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
 
     fun createGroup(name: String, description: String?, imageUrl: String?) {
         viewModelScope.launch {
@@ -41,7 +67,10 @@ class GroupsViewModel @Inject constructor(
                 val result = groupsRepository.createGroup(name, description, imageUrl)
 
                 _createGroupState.value = when {
-                    result.isSuccess -> CreateGroupUiState.Success(result.getOrThrow())
+                    result.isSuccess -> {
+                        loadGroups() // Recarrega a lista após criar
+                        CreateGroupUiState.Success(result.getOrThrow())
+                    }
                     else -> {
                         Log.e("GroupsViewModel", "Erro ao criar grupo: ${result.exceptionOrNull()?.message}")
                         CreateGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar grupo")
@@ -69,6 +98,6 @@ sealed class CreateGroupUiState {
 
 sealed class GroupsUiState {
     object Loading : GroupsUiState()
-    data class Success(val groups: List<CreateGroupResponse>) : GroupsUiState()
+    data class Success(val groups: List<GroupListResponse>) : GroupsUiState()
     data class Error(val message: String) : GroupsUiState()
 }
