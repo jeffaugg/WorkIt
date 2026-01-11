@@ -26,6 +26,7 @@ fun GroupsScreen(
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val createGroupState by viewModel.createGroupState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -33,7 +34,6 @@ fun GroupsScreen(
         Group(id = "1", name = "Corredores da Manhã", description = "Foco em maratonas e 5k.", memberCount = 24, isAdmin = true),
         Group(id = "2", name = "Esquadrão da Força", description = "Powerlifting e força.", memberCount = 31, isAdmin = false)
     )}
-
 
     val discoverGroups = remember { mutableStateListOf(
         Group(id = "3", name = "Fluxo de Yoga", description = "Movimento consciente.", memberCount = 18, isAdmin = false),
@@ -43,27 +43,53 @@ fun GroupsScreen(
 
     if (showDialog) {
         CreateGroupDialog(
-            onDismiss = { showDialog = false },
+            onDismiss = {
+                if (createGroupState !is CreateGroupUiState.Loading) {
+                    showDialog = false
+                }
+            },
             onCreate = { name, desc, uri ->
-                viewModel.createGroup(name, desc, uri?.toString())
-            }
+                viewModel.createGroup(name, desc, null)
+            },
+            isLoading = createGroupState is CreateGroupUiState.Loading
         )
     }
 
     LaunchedEffect(createGroupState) {
-        if (createGroupState is CreateGroupUiState.Success) {
-            val newGroup = (createGroupState as CreateGroupUiState.Success).group
-//            myGroups.add(0, Group(id = newGroup.id, name = newGroup.name, description = newGroup.description, memberCount = 1, isAdmin = true, imageUrl = newGroup.imgUrl ?: ""))
-            showDialog = false
-            selectedTabIndex = 0
-            viewModel.resetCreateGroupState()
+        when (createGroupState) {
+            is CreateGroupUiState.Success -> {
+                val newGroup = (createGroupState as CreateGroupUiState.Success).group
+                myGroups.add(0, Group(
+                    id = newGroup.id,
+                    name = newGroup.name,
+                    description = newGroup.description ?: "",
+                    memberCount = 1,
+                    isAdmin = true,
+                    imageUrl = newGroup.imgUrl ?: ""
+                ))
+                showDialog = false
+                selectedTabIndex = 0
+                viewModel.resetCreateGroupState()
+                snackbarHostState.showSnackbar(
+                    message = "Grupo '${newGroup.name}' criado com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
+            }
+            is CreateGroupUiState.Error -> {
+                val errorMessage = (createGroupState as CreateGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetCreateGroupState()
+            }
+            else -> { /* Idle ou Loading */ }
         }
-        // You can also handle CreateGroupUiState.Error here, e.g., show a Snackbar
     }
-
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
@@ -124,10 +150,8 @@ fun GroupsScreen(
                 GroupCard(
                     group = group,
                     isMember = isMyGroupsTab,
-                    onActionClick = {
-                    },
-                    onCardClick = {
-                    }
+                    onActionClick = {},
+                    onCardClick = {}
                 )
             }
         }
