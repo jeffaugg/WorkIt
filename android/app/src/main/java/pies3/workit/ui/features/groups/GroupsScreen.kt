@@ -13,15 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.groups.components.CreateGroupDialog
 import pies3.workit.ui.features.groups.components.Group
 import pies3.workit.ui.features.groups.components.GroupCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupsScreen() {
+fun GroupsScreen(
+    viewModel: GroupsViewModel = hiltViewModel()
+) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val createGroupState by viewModel.createGroupState.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -41,12 +45,22 @@ fun GroupsScreen() {
         CreateGroupDialog(
             onDismiss = { showDialog = false },
             onCreate = { name, desc, uri ->
-                myGroups.add(0, Group(id = "new", name = name, description = desc, memberCount = 1, isAdmin = true, imageUrl = uri?.toString() ?: ""))
-                showDialog = false
-                selectedTabIndex = 0
+                viewModel.createGroup(name, desc, uri?.toString())
             }
         )
     }
+
+    LaunchedEffect(createGroupState) {
+        if (createGroupState is CreateGroupUiState.Success) {
+            val newGroup = (createGroupState as CreateGroupUiState.Success).group
+//            myGroups.add(0, Group(id = newGroup.id, name = newGroup.name, description = newGroup.description, memberCount = 1, isAdmin = true, imageUrl = newGroup.imgUrl ?: ""))
+            showDialog = false
+            selectedTabIndex = 0
+            viewModel.resetCreateGroupState()
+        }
+        // You can also handle CreateGroupUiState.Error here, e.g., show a Snackbar
+    }
+
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
