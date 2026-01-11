@@ -7,12 +7,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.AuthRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -24,6 +26,7 @@ class LoginViewModel @Inject constructor(
 
             authRepository.login(email, password)
                 .onSuccess { response ->
+                    tokenManager.saveToken(response.token)
                     _uiState.value = LoginUiState.Success(response.token)
                 }
                 .onFailure { error ->

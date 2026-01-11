@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.profile.components.EditProfileSheet
 import pies3.workit.ui.features.profile.components.NotificationRow
 import pies3.workit.ui.features.profile.components.ProfileHeader
@@ -26,8 +27,29 @@ fun ProfileScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
     showEditModal: Boolean,
-    onModalShown: () -> Unit
+    onModalShown: () -> Unit,
+    onLogout: () -> Unit = {},
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val logoutState by viewModel.logoutState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(logoutState) {
+        when (logoutState) {
+            is LogoutState.Success -> {
+                onLogout()
+                viewModel.resetLogoutState()
+            }
+            is LogoutState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = (logoutState as LogoutState.Error).message,
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetLogoutState()
+            }
+            else -> { /* Idle ou Loading */ }
+        }
+    }
     var notifyNewPosts by remember { mutableStateOf(true) }
     var notifyGroupUpdates by remember { mutableStateOf(true) }
     var notifyAchievements by remember { mutableStateOf(true) }
@@ -52,102 +74,115 @@ fun ProfileScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
 
-        ProfileHeader(
-            name = "Alex Thompson",
-            email = "alex.thompson@email.com",
-            description = "Corredor, amante dos esportes!",
-            memberSince = "Membro desde março de 2024",
-            initials = "AT",
-            onEditClick = { isSheetOpen = true }
-        )
-
-        ProfileSectionCard(title = "Aparência", icon = Icons.Outlined.Build) {
-            Text(
-                text = "Personalize a aparência do aplicativo",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            NotificationRow(
-                title = "Modo Escuro",
-                subtitle = "Alternar entre temas claro e escuro",
-                checked = isDarkTheme,
-                onCheckedChange = { isChecked ->
-                    onThemeChange(isChecked)
-                }
-            )
-        }
-
-        ProfileSectionCard(title = "Notificações", icon = Icons.Default.Notifications) {
-            Text(
-                text = "Gerencie como você deseja ser notificado sobre atividades em grupo",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
+            ProfileHeader(
+                name = "Alex Thompson",
+                email = "alex.thompson@email.com",
+                description = "Corredor, amante dos esportes!",
+                memberSince = "Membro desde março de 2024",
+                initials = "AT",
+                onEditClick = { isSheetOpen = true }
             )
 
-            NotificationRow(
-                title = "Novas Postagens",
-                subtitle = "Seja notificado quando amigos postarem treinos",
-                checked = notifyNewPosts,
-                onCheckedChange = { notifyNewPosts = it }
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            NotificationRow(
-                title = "Atualizações do Grupo",
-                subtitle = "Novidades sobre seus grupos",
-                checked = notifyGroupUpdates,
-                onCheckedChange = { notifyGroupUpdates = it }
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            NotificationRow(
-                title = "Conquistas",
-                subtitle = "Marcos pessoais e sequências",
-                checked = notifyAchievements,
-                onCheckedChange = { notifyAchievements = it }
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            NotificationRow(
-                title = "Resumo Semanal",
-                subtitle = "Resumo das atividades da sua semana",
-                checked = notifyWeeklyDigest,
-                onCheckedChange = { notifyWeeklyDigest = it }
-            )
-        }
-
-        ProfileSectionCard(title = "Configurações", icon = Icons.Default.Settings) {
-
-            SettingsButton(text = "Configurações da Conta", icon = Icons.Default.Settings)
-            Spacer(modifier = Modifier.height(8.dp))
-            SettingsButton(text = "Privacidade e Segurança", icon = Icons.Default.Info)
-            Spacer(modifier = Modifier.height(8.dp))
-            SettingsButton(text = "Ajuda e Suporte", icon = Icons.Default.Info)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { /* TODO: Lógica de Logout */ },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020)),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sair")
+            ProfileSectionCard(title = "Aparência", icon = Icons.Outlined.Build) {
+                Text(
+                    text = "Personalize a aparência do aplicativo",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                NotificationRow(
+                    title = "Modo Escuro",
+                    subtitle = "Alternar entre temas claro e escuro",
+                    checked = isDarkTheme,
+                    onCheckedChange = { isChecked ->
+                        onThemeChange(isChecked)
+                    }
+                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            ProfileSectionCard(title = "Notificações", icon = Icons.Default.Notifications) {
+                Text(
+                    text = "Gerencie como você deseja ser notificado sobre atividades em grupo",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                NotificationRow(
+                    title = "Novas Postagens",
+                    subtitle = "Seja notificado quando amigos postarem treinos",
+                    checked = notifyNewPosts,
+                    onCheckedChange = { notifyNewPosts = it }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                NotificationRow(
+                    title = "Atualizações do Grupo",
+                    subtitle = "Novidades sobre seus grupos",
+                    checked = notifyGroupUpdates,
+                    onCheckedChange = { notifyGroupUpdates = it }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                NotificationRow(
+                    title = "Conquistas",
+                    subtitle = "Marcos pessoais e sequências",
+                    checked = notifyAchievements,
+                    onCheckedChange = { notifyAchievements = it }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                NotificationRow(
+                    title = "Resumo Semanal",
+                    subtitle = "Resumo das atividades da sua semana",
+                    checked = notifyWeeklyDigest,
+                    onCheckedChange = { notifyWeeklyDigest = it }
+                )
+            }
+
+            ProfileSectionCard(title = "Configurações", icon = Icons.Default.Settings) {
+
+                SettingsButton(text = "Configurações da Conta", icon = Icons.Default.Settings)
+                Spacer(modifier = Modifier.height(8.dp))
+                SettingsButton(text = "Privacidade e Segurança", icon = Icons.Default.Info)
+                Spacer(modifier = Modifier.height(8.dp))
+                SettingsButton(text = "Ajuda e Suporte", icon = Icons.Default.Info)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { viewModel.logout() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020)),
+                    shape = MaterialTheme.shapes.medium,
+                    enabled = logoutState !is LogoutState.Loading
+                ) {
+                    if (logoutState is LogoutState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Sair")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }
 
