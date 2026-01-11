@@ -4,6 +4,7 @@ import pies3.workit.data.api.GroupApi
 import pies3.workit.data.dto.group.CreateGroupResponse
 import pies3.workit.data.dto.group.CreateGroupRequest
 import pies3.workit.data.dto.group.GroupListResponse
+import pies3.workit.data.dto.group.JoinGroupResponse
 import javax.inject.Inject
 
 
@@ -31,6 +32,15 @@ class GroupsRepository @Inject constructor(
     suspend fun getGroupById(groupId: String): Result<GroupListResponse> {
         return try {
             val response = groupApi.getGroupById(groupId)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun joinGroup(groupId: String, userId: String): Result<JoinGroupResponse> {
+        return try {
+            val response = groupApi.joinGroup(groupId, userId)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
