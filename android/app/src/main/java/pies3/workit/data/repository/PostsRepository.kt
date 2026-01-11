@@ -3,6 +3,7 @@ package pies3.workit.data.repository
 import pies3.workit.data.api.PostApi
 import pies3.workit.data.dto.post.CreatePostRequest
 import pies3.workit.data.dto.post.PostResponse
+import pies3.workit.data.dto.post.UpdatePostRequest
 import javax.inject.Inject
 
 class PostsRepository @Inject constructor(
@@ -90,6 +91,37 @@ class PostsRepository @Inject constructor(
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Erro ao excluir publicação"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updatePost(
+        postId: String,
+        title: String,
+        activityType: String,
+        body: String?,
+        imageUrl: String?,
+        location: String?,
+        groupId: String
+    ): Result<PostResponse> {
+        return try {
+            val request = UpdatePostRequest(
+                title = title,
+                activityType = activityType,
+                body = body,
+                imageUrl = imageUrl,
+                location = location,
+                groupId = groupId
+            )
+            
+            val response = postApi.updatePost(postId, request)
+            
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Erro ao atualizar publicação"))
             }
         } catch (e: Exception) {
             Result.failure(e)

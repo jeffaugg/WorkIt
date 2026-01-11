@@ -31,6 +31,7 @@ fun PostDetailScreen(
     postId: String,
     onNavigateBack: () -> Unit,
     onPostDeleted: () -> Unit = {},
+    onEditClick: (String) -> Unit = {},
     viewModel: PostDetailViewModel = hiltViewModel()
 ) {
     val postState by viewModel.postState.collectAsStateWithLifecycle()
@@ -250,7 +251,7 @@ fun PostDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = { /* TODO: Implementar edição */ },
+                                    onClick = { onEditClick(postId) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {

@@ -33,6 +33,7 @@ import pies3.workit.ui.features.auth.register.RegisterScreen
 import pies3.workit.ui.features.feed.FeedScreen
 import pies3.workit.ui.features.feed.GroupFeedScreen
 import pies3.workit.ui.features.groups.GroupsScreen
+import pies3.workit.ui.features.post.EditPostScreen
 import pies3.workit.ui.features.post.PostDetailScreen
 import pies3.workit.ui.features.post.PostScreen
 import pies3.workit.ui.features.profile.ProfileScreen
@@ -194,8 +195,28 @@ class MainActivity : ComponentActivity() {
                                 postId = postId,
                                 onNavigateBack = { navController.popBackStack() },
                                 onPostDeleted = {
-                                    navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                                    val previousRoute = navController.previousBackStackEntry?.destination?.route
                                     navController.popBackStack()
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("refresh", true)
+                                },
+                                onEditClick = { id ->
+                                    navController.navigate(Screen.EditPost.createRoute(id))
+                                }
+                            )
+                        }
+                        composable(
+                            route = Screen.EditPost.route,
+                            arguments = listOf(
+                                navArgument("postId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                            EditPostScreen(
+                                postId = postId,
+                                onNavigateBack = { navController.popBackStack() },
+                                onPostUpdated = {
+                                    navController.popBackStack()
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("refresh", true)
                                 }
                             )
                         }

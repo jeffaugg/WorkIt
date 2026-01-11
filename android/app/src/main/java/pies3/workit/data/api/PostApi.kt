@@ -2,11 +2,13 @@ package pies3.workit.data.api
 
 import pies3.workit.data.dto.post.CreatePostRequest
 import pies3.workit.data.dto.post.PostResponse
+import pies3.workit.data.dto.post.UpdatePostRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface PostApi {
@@ -21,6 +23,12 @@ interface PostApi {
 
     @GET("posts/{id}")
     suspend fun getPostById(@Path("id") postId: String): Response<PostResponse>
+
+    @PUT("posts/{id}")
+    suspend fun updatePost(
+        @Path("id") postId: String,
+        @Body request: UpdatePostRequest
+    ): Response<PostResponse>
 
     @DELETE("posts/{id}")
     suspend fun deletePost(@Path("id") postId: String): Response<Unit>

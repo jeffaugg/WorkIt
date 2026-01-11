@@ -10,4 +10,7 @@ sealed class Screen(val route: String) {
     data object PostDetail : Screen("post_detail/{postId}") {
         fun createRoute(postId: String) = "post_detail/$postId"
     }
+    data object EditPost : Screen("edit_post/{postId}") {
+        fun createRoute(postId: String) = "edit_post/$postId"
+    }
 }
