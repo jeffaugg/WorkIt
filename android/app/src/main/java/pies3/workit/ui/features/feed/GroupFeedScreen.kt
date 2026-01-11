@@ -24,7 +24,10 @@ fun GroupFeedScreen(
     groupId: String,
     groupName: String,
     onNavigateBack: () -> Unit,
-    viewModel: GroupFeedViewModel = hiltViewModel()
+    onPostClick: (String) -> Unit = {},
+    viewModel: GroupFeedViewModel = hiltViewModel(),
+    shouldRefresh: Boolean = false,
+    onRefreshHandled: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val feedState by viewModel.feedState.collectAsStateWithLifecycle()
@@ -37,6 +40,13 @@ fun GroupFeedScreen(
     LaunchedEffect(feedState) {
         if (feedState !is GroupFeedUiState.Loading) {
             isRefreshing = false
+        }
+    }
+
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.refresh(groupId)
+            onRefreshHandled()
         }
     }
 
@@ -109,7 +119,10 @@ fun GroupFeedScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(state.posts) { post ->
-                            PostCard(post = post)
+                            PostCard(
+                                post = post,
+                                onClick = { onPostClick(post.id) }
+                            )
                         }
                         item {
                             EndOfFeedIndicator()

@@ -33,6 +33,7 @@ import pies3.workit.ui.features.auth.register.RegisterScreen
 import pies3.workit.ui.features.feed.FeedScreen
 import pies3.workit.ui.features.feed.GroupFeedScreen
 import pies3.workit.ui.features.groups.GroupsScreen
+import pies3.workit.ui.features.post.PostDetailScreen
 import pies3.workit.ui.features.post.PostScreen
 import pies3.workit.ui.features.profile.ProfileScreen
 import pies3.workit.ui.features.splash.SplashScreen
@@ -138,7 +139,19 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable(BottomBarScreen.Feed.route) { FeedScreen() }
+                        composable(BottomBarScreen.Feed.route) { backStackEntry ->
+                            val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("refresh") ?: false
+                            
+                            FeedScreen(
+                                onPostClick = { postId ->
+                                    navController.navigate(Screen.PostDetail.createRoute(postId))
+                                },
+                                shouldRefresh = shouldRefresh,
+                                onRefreshHandled = {
+                                    backStackEntry.savedStateHandle.remove<Boolean>("refresh")
+                                }
+                            )
+                        }
                         composable("groups") {
                             GroupsScreen(
                                 onGroupClick = { groupId, groupName ->
@@ -155,18 +168,50 @@ class MainActivity : ComponentActivity() {
                         ) { backStackEntry ->
                             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
                             val groupName = backStackEntry.arguments?.getString("groupName") ?: ""
+                            val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("refresh") ?: false
+                            
                             GroupFeedScreen(
                                 groupId = groupId,
                                 groupName = groupName,
-                                onNavigateBack = { navController.popBackStack() }
+                                onNavigateBack = { navController.popBackStack() },
+                                onPostClick = { postId ->
+                                    navController.navigate(Screen.PostDetail.createRoute(postId))
+                                },
+                                shouldRefresh = shouldRefresh,
+                                onRefreshHandled = {
+                                    backStackEntry.savedStateHandle.remove<Boolean>("refresh")
+                                }
+                            )
+                        }
+                        composable(
+                            route = Screen.PostDetail.route,
+                            arguments = listOf(
+                                navArgument("postId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                            PostDetailScreen(
+                                postId = postId,
+                                onNavigateBack = { navController.popBackStack() },
+                                onPostDeleted = {
+                                    navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                                    navController.popBackStack()
+                                }
                             )
                         }
                         composable("post") {
                             PostScreen(
-                                onNavigateBack = { navController.popBackStack() }
+                                onNavigateBack = { navController.popBackStack() },
+                                onPostCreated = {
+                                    navController.navigate(BottomBarScreen.Feed.route) {
+                                        popUpTo(BottomBarScreen.Feed.route) { 
+                                            inclusive = true 
+                                        }
+                                    }
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("refresh", true)
+                                }
                             )
                         }
-
                         composable(
                             route = BottomBarScreen.Profile.route,
                             arguments = listOf(navArgument("showEditModal") {

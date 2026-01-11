@@ -52,6 +52,7 @@ import pies3.workit.ui.features.groups.GroupsViewModel
 @Composable
 fun PostScreen(
     onNavigateBack: () -> Unit,
+    onPostCreated: () -> Unit = {},
     createPostViewModel: CreatePostViewModel = hiltViewModel(),
     groupsViewModel: GroupsViewModel = hiltViewModel()
 ) {
@@ -139,7 +140,7 @@ fun PostScreen(
         when (createPostState) {
             is CreatePostUiState.Success -> {
                 createPostViewModel.resetState()
-                onNavigateBack()
+                onPostCreated()
             }
             else -> {}
         }

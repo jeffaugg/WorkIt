@@ -67,4 +67,32 @@ class PostsRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getPostById(postId: String): Result<PostResponse> {
+        return try {
+            val response = postApi.getPostById(postId)
+            
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Erro ao carregar publicação"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deletePost(postId: String): Result<Unit> {
+        return try {
+            val response = postApi.deletePost(postId)
+            
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Erro ao excluir publicação"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

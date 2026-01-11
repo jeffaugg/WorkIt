@@ -43,7 +43,10 @@ enum class ActivityTypeUI {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
-    viewModel: FeedViewModel = hiltViewModel()
+    viewModel: FeedViewModel = hiltViewModel(),
+    onPostClick: (String) -> Unit = {},
+    shouldRefresh: Boolean = false,
+    onRefreshHandled: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val feedState by viewModel.feedState.collectAsStateWithLifecycle()
@@ -52,6 +55,13 @@ fun FeedScreen(
     LaunchedEffect(feedState) {
         if (feedState !is FeedUiState.Loading) {
             isRefreshing = false
+        }
+    }
+
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.refresh()
+            onRefreshHandled()
         }
     }
 
@@ -105,7 +115,10 @@ fun FeedScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(state.posts) { post ->
-                            PostCard(post = post)
+                            PostCard(
+                                post = post,
+                                onClick = { onPostClick(post.id) }
+                            )
                         }
                         item {
                             EndOfFeedIndicator()
@@ -151,8 +164,9 @@ fun FeedScreen(
 }
 
 @Composable
-fun PostCard(post: PostResponse) {
+fun PostCard(post: PostResponse, onClick: () -> Unit = {}) {
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
