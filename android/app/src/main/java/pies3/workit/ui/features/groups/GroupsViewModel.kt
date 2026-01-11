@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import pies3.workit.data.dto.group.CreateGroupResponse
 import pies3.workit.data.dto.group.GroupListResponse
+import pies3.workit.data.dto.group.JoinGroupResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.GroupsRepository
 import pies3.workit.data.repository.UserRepository
@@ -30,6 +31,9 @@ class GroupsViewModel @Inject constructor(
 
     private val _allGroupsState = MutableStateFlow<GroupsUiState>(GroupsUiState.Loading)
     val allGroupsState: StateFlow<GroupsUiState> = _allGroupsState.asStateFlow()
+
+    private val _joinGroupState = MutableStateFlow<JoinGroupUiState>(JoinGroupUiState.Idle)
+    val joinGroupState: StateFlow<JoinGroupUiState> = _joinGroupState.asStateFlow()
 
     init {
         loadMyGroups()
@@ -115,7 +119,7 @@ class GroupsViewModel @Inject constructor(
 
                 _createGroupState.value = when {
                     result.isSuccess -> {
-                       loadMyGroups()
+                        loadMyGroups()
                         loadAllGroups()
                         CreateGroupUiState.Success(result.getOrThrow())
                     }
@@ -131,10 +135,46 @@ class GroupsViewModel @Inject constructor(
         }
     }
 
+    fun joinGroup(groupId: String) {
+        viewModelScope.launch {
+            try {
+                _joinGroupState.value = JoinGroupUiState.Loading
+
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    Log.e("GroupsViewModel", "UserId é null - usuário não autenticado")
+                    _joinGroupState.value = JoinGroupUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.joinGroup(groupId, userId)
+
+                _joinGroupState.value = when {
+                    result.isSuccess -> {
+                       loadMyGroups()
+                        loadAllGroups()
+                        JoinGroupUiState.Success(result.getOrThrow())
+                    }
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao participar do grupo: ${result.exceptionOrNull()?.message}")
+                        JoinGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao participar do grupo")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao participar do grupo", e)
+                _joinGroupState.value = JoinGroupUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
     fun resetCreateGroupState() {
         _createGroupState.value = CreateGroupUiState.Idle
     }
 
+    fun resetJoinGroupState() {
+        _joinGroupState.value = JoinGroupUiState.Idle
+    }
 }
 
 sealed class CreateGroupUiState {
@@ -148,4 +188,11 @@ sealed class GroupsUiState {
     object Loading : GroupsUiState()
     data class Success(val groups: List<GroupListResponse>) : GroupsUiState()
     data class Error(val message: String) : GroupsUiState()
+}
+
+sealed class JoinGroupUiState {
+    object Idle : JoinGroupUiState()
+    object Loading : JoinGroupUiState()
+    data class Success(val result: JoinGroupResponse) : JoinGroupUiState()
+    data class Error(val message: String) : JoinGroupUiState()
 }
