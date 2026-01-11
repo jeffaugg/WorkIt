@@ -8,7 +8,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import pies3.workit.data.api.AuthApi
 import pies3.workit.data.api.GroupApi
+import pies3.workit.data.api.UserApi
 import pies3.workit.data.interceptors.AuthInterceptor
+import pies3.workit.data.repository.UserRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -63,5 +65,17 @@ object NetworkModule {
     @Singleton
     fun provideGroupApi(retrofit: Retrofit): GroupApi {
         return retrofit.create(GroupApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserApi(retrofit: Retrofit): UserApi {
+        return retrofit.create(UserApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserRepository(userApi: UserApi): UserRepository {
+        return UserRepository(userApi)
     }
 }
