@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -25,21 +26,12 @@ fun GroupsScreen(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+
     val createGroupState by viewModel.createGroupState.collectAsState()
+    val groupsState by viewModel.groupsState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
-    val myGroups = remember { mutableStateListOf(
-        Group(id = "1", name = "Corredores da Manhã", description = "Foco em maratonas e 5k.", memberCount = 24, isAdmin = true),
-        Group(id = "2", name = "Esquadrão da Força", description = "Powerlifting e força.", memberCount = 31, isAdmin = false)
-    )}
-
-    val discoverGroups = remember { mutableStateListOf(
-        Group(id = "3", name = "Fluxo de Yoga", description = "Movimento consciente.", memberCount = 18, isAdmin = false),
-        Group(id = "4", name = "Calistenia Urbana", description = "Treino de rua e barras.", memberCount = 42, isAdmin = false),
-        Group(id = "5", name = "Clube do Pedal", description = "Ciclismo de estrada.", memberCount = 150, isAdmin = false)
-    )}
 
     if (showDialog) {
         CreateGroupDialog(
@@ -59,14 +51,6 @@ fun GroupsScreen(
         when (createGroupState) {
             is CreateGroupUiState.Success -> {
                 val newGroup = (createGroupState as CreateGroupUiState.Success).group
-                myGroups.add(0, Group(
-                    id = newGroup.id,
-                    name = newGroup.name,
-                    description = newGroup.description ?: "",
-                    memberCount = 1,
-                    isAdmin = true,
-                    imageUrl = newGroup.imgUrl ?: ""
-                ))
                 showDialog = false
                 selectedTabIndex = 0
                 viewModel.resetCreateGroupState()
@@ -135,24 +119,84 @@ fun GroupsScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
 
-        val currentList = if (selectedTabIndex == 0) myGroups else discoverGroups
-        val isMyGroupsTab = selectedTabIndex == 0
+        when (val state = groupsState) {
+            is GroupsUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is GroupsUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.loadGroups() }) {
+                            Text("Tentar novamente")
+                        }
+                    }
+                }
+            }
+            is GroupsUiState.Success -> {
+                val allGroups = state.groups
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
-        ) {
-            items(currentList) { group ->
-                GroupCard(
-                    group = group,
-                    isMember = isMyGroupsTab,
-                    onActionClick = {},
-                    onCardClick = {}
-                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
+                ) {
+                    if (allGroups.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (selectedTabIndex == 0)
+                                        "Você ainda não está em nenhum grupo"
+                                    else
+                                        "Nenhum grupo disponível",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
+                        items(allGroups) { group ->
+                            GroupCard(
+                                group = Group(
+                                    id = group.id,
+                                    name = group.name,
+                                    description = group.description ?: "",
+                                    memberCount = group.users.size,
+                                    isAdmin = false, // TODO: verificar se o usuário é admin
+                                    imageUrl = group.imageUrl ?: ""
+                                ),
+                                isMember = selectedTabIndex == 0,
+                                onActionClick = {},
+                                onCardClick = {}
+                            )
+                        }
+                    }
+                }
             }
         }
     }
