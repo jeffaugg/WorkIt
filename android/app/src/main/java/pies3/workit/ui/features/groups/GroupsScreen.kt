@@ -30,6 +30,7 @@ fun GroupsScreen(
     val createGroupState by viewModel.createGroupState.collectAsState()
     val myGroupsState by viewModel.myGroupsState.collectAsState()
     val allGroupsState by viewModel.allGroupsState.collectAsState()
+    val joinGroupState by viewModel.joinGroupState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -69,6 +70,27 @@ fun GroupsScreen(
                     duration = SnackbarDuration.Long
                 )
                 viewModel.resetCreateGroupState()
+            }
+            else -> { /* Idle ou Loading */ }
+        }
+    }
+
+    LaunchedEffect(joinGroupState) {
+        when (joinGroupState) {
+            is JoinGroupUiState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Você entrou no grupo com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetJoinGroupState()
+            }
+            is JoinGroupUiState.Error -> {
+                val errorMessage = (joinGroupState as JoinGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetJoinGroupState()
             }
             else -> { /* Idle ou Loading */ }
         }
@@ -162,6 +184,7 @@ fun GroupsScreen(
             is GroupsUiState.Success -> {
                 val groups = state.groups
                 val isMember = selectedTabIndex == 0
+                val isJoining = joinGroupState is JoinGroupUiState.Loading
 
                 LazyColumn(
                     modifier = Modifier
@@ -201,8 +224,13 @@ fun GroupsScreen(
                                     imageUrl = group.imageUrl ?: ""
                                 ),
                                 isMember = isMember,
-                                onActionClick = {},
-                                onCardClick = {}
+                                onActionClick = {
+                                    if (!isMember) {
+                                        viewModel.joinGroup(group.id)
+                                    }
+                                },
+                                onCardClick = {},
+                                isLoading = isJoining
                             )
                         }
                     }
