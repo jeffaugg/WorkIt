@@ -4,15 +4,15 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupsService } from './groups.service';
 
+@ApiBearerAuth('JWT-auth')
 @ApiTags('groups')
 @Controller('groups')
 export class GroupsController {
@@ -45,7 +45,7 @@ export class GroupsController {
 
   @Post(':id/users/:userId')
   addUserToGroup(
-    @Param('id', ParseIntPipe) groupId: string,
+    @Param('id') groupId: string,
     @Param('userId') userId: string,
   ) {
     return this.groupsService.addUserToGroup(groupId, userId);
@@ -53,7 +53,7 @@ export class GroupsController {
 
   @Delete(':id/users/:userId')
   removeUserFromGroup(
-    @Param('id', ParseIntPipe) groupId: string,
+    @Param('id') groupId: string,
     @Param('userId') userId: string,
   ) {
     return this.groupsService.removeUserFromGroup(groupId, userId);

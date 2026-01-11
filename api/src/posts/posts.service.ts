@@ -8,21 +8,14 @@ export class PostsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createPostDto: CreatePostDto) {
-    const {
-      title,
-      activityType,
-      body,
-      imageUrl,
-      location,
-      groupId,
-      userId,
-    } = createPostDto;
+    const { title, activityType, body, imageUrl, location, groupId, userId } =
+      createPostDto;
 
     if (!userId) {
       throw new BadRequestException('userId is required');
     }
 
-    return this.prisma.post.create({
+    const post = await this.prisma.post.create({
       data: {
         title,
         activityType,
@@ -45,6 +38,33 @@ export class PostsService {
         },
       },
     });
+
+    return {
+      id: post.id,
+      title: post.title,
+      activityType: post.activityType,
+      body: post.body ?? null,
+      imageUrl: post.imageUrl ?? null,
+      location: post.location ?? null,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt ?? null,
+      user: {
+        id: post.user.id,
+        name: post.user.name,
+      },
+      group: {
+        id: post.group.id,
+        name: post.group.name,
+        imageUrl: post.group.imgUrl ?? null,
+        description: post.group.description ?? null,
+        createdAt: post.group.createdAt,
+        updatedAt: post.group.updatedAt ?? null,
+        users: post.group.users.map((gu) => ({
+          id: gu.user.id,
+          name: gu.user.name,
+        })),
+      },
+    };
   }
 
   async findAll() {

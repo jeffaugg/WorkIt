@@ -3,11 +3,11 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { compare, hash } from 'bcryptjs';
+import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { SignupDto } from './dto/signup.dto';
-import { compare, hash } from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -53,7 +53,7 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        name: password,    
+        name,
         email,
         password: senhaHash,
       },
