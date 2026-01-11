@@ -107,27 +107,38 @@ class GroupsViewModel @Inject constructor(
             try {
                 _createGroupState.value = CreateGroupUiState.Loading
 
+                val userId = tokenManager.getUserId()
                 val token = tokenManager.getToken()
 
-                if (token == null) {
-                    Log.e("GroupsViewModel", "Token é null - usuário não autenticado")
+                if (token == null || userId == null) {
+                    Log.e("GroupsViewModel", "Token ou UserId é null - usuário não autenticado")
                     _createGroupState.value = CreateGroupUiState.Error("Usuário não autenticado")
                     return@launch
                 }
 
-                val result = groupsRepository.createGroup(name, description, imageUrl)
+                val createResult = groupsRepository.createGroup(name, description, imageUrl)
 
-                _createGroupState.value = when {
-                    result.isSuccess -> {
-                        loadMyGroups()
-                        loadAllGroups()
-                        CreateGroupUiState.Success(result.getOrThrow())
-                    }
-                    else -> {
-                        Log.e("GroupsViewModel", "Erro ao criar grupo: ${result.exceptionOrNull()?.message}")
-                        CreateGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar grupo")
-                    }
+                if (createResult.isFailure) {
+                    Log.e("GroupsViewModel", "Erro ao criar grupo: ${createResult.exceptionOrNull()?.message}")
+                    _createGroupState.value = CreateGroupUiState.Error(
+                        createResult.exceptionOrNull()?.message ?: "Erro ao criar grupo"
+                    )
+                    return@launch
                 }
+
+                val createdGroup = createResult.getOrThrow()
+
+                val joinResult = groupsRepository.joinGroup(createdGroup.id, userId)
+
+                if (joinResult.isFailure) {
+                    Log.e("GroupsViewModel", "Grupo criado mas erro ao adicionar criador: ${joinResult.exceptionOrNull()?.message}")
+                }
+
+                loadMyGroups()
+                loadAllGroups()
+
+                _createGroupState.value = CreateGroupUiState.Success(createdGroup)
+
             } catch (e: Exception) {
                 Log.e("GroupsViewModel", "Exception ao criar grupo", e)
                 _createGroupState.value = CreateGroupUiState.Error(e.message ?: "Erro desconhecido")
@@ -152,7 +163,7 @@ class GroupsViewModel @Inject constructor(
 
                 _joinGroupState.value = when {
                     result.isSuccess -> {
-                       loadMyGroups()
+                        loadMyGroups()
                         loadAllGroups()
                         JoinGroupUiState.Success(result.getOrThrow())
                     }
