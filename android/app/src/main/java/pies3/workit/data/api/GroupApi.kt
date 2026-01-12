@@ -32,6 +32,12 @@ interface GroupApi{
         @Path("userId") userId: String
     ): JoinGroupResponse
 
+    @GET("groups/user/{userId}/search/{name}")
+    suspend fun searchUserGroups(
+        @Path("userId") userId: String,
+        @Path("name") name: String
+    ): List<GroupListResponse>
+
     @DELETE("groups/{groupId}/users/{userId}")
     suspend fun leaveGroup(
         @Path("groupId") groupId: String,

@@ -65,6 +65,15 @@ class GroupsRepository @Inject constructor(
         }
     }
 
+    suspend fun searchUserGroups(userId: String, name: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.searchUserGroups(userId, name)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun leaveGroup(groupId: String, userId: String): Result<Unit> {
         return try {
             groupApi.leaveGroup(groupId, userId)

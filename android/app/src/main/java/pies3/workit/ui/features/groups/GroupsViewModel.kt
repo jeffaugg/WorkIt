@@ -41,6 +41,9 @@ class GroupsViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _myGroupsSearchQuery = MutableStateFlow("")
+    val myGroupsSearchQuery: StateFlow<String> = _myGroupsSearchQuery.asStateFlow()
+
     init {
         loadMyGroups()
         loadExploreGroups()
@@ -246,6 +249,15 @@ class GroupsViewModel @Inject constructor(
         }
     }
 
+    fun updateMyGroupsSearchQuery(query: String) {
+        _myGroupsSearchQuery.value = query
+        if (query.isNotEmpty()) {
+            searchMyGroups(query)
+        } else {
+            loadMyGroups()
+        }
+    }
+
     private fun searchGroups(name: String) {
         viewModelScope.launch {
             try {
@@ -263,6 +275,34 @@ class GroupsViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("GroupsViewModel", "Exception ao buscar grupos", e)
                 _allGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    private fun searchMyGroups(name: String) {
+        viewModelScope.launch {
+            try {
+                _myGroupsState.value = GroupsUiState.Loading
+
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    _myGroupsState.value = GroupsUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.searchUserGroups(userId, name)
+
+                _myGroupsState.value = when {
+                    result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao buscar meus grupos: ${result.exceptionOrNull()?.message}")
+                        GroupsUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao buscar meus grupos")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao buscar meus grupos", e)
+                _myGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }

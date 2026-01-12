@@ -107,6 +107,42 @@ export class GroupsService {
     }));
   }
 
+  async searchUserGroups(userId: string, name: string) {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
+        },
+        users: {
+          some: {
+            userId,
+          },
+        },
+      },
+      include: {
+        users: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      imageUrl: group.imgUrl ?? null,
+      description: group.description ?? null,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt ?? null,
+      users: group.users.map((gu) => ({
+        id: gu.user.id,
+        name: gu.user.name,
+      })),
+    }));
+  }
+
   async findOne(id: string) {
     const group = await this.prisma.group.findUnique({
       where: { id },

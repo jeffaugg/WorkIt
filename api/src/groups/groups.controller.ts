@@ -38,6 +38,14 @@ export class GroupsController {
     return this.groupsService.searchByName(name);
   }
 
+  @Get('user/:userId/search/:name')
+  searchUserGroups(
+    @Param('userId') userId: string,
+    @Param('name') name: string,
+  ) {
+    return this.groupsService.searchUserGroups(userId, name);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.groupsService.findOne(id);

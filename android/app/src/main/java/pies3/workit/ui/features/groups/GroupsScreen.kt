@@ -40,6 +40,7 @@ fun GroupsScreen(
     val joinGroupState by viewModel.joinGroupState.collectAsState()
     val leaveGroupState by viewModel.leaveGroupState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val myGroupsSearchQuery by viewModel.myGroupsSearchQuery.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -159,30 +160,41 @@ fun GroupsScreen(
                     )
                 }
 
-                if (selectedTabIndex == 1) {
-                    val keyboardController = LocalSoftwareKeyboardController.current
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.updateSearchQuery(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        placeholder = { Text("Buscar grupos...") },
-                        leadingIcon = { Icon(Icons.Default.Search, null) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
-                                    Icon(Icons.Default.Close, "Limpar busca")
+                val keyboardController = LocalSoftwareKeyboardController.current
+                OutlinedTextField(
+                    value = if (selectedTabIndex == 0) myGroupsSearchQuery else searchQuery,
+                    onValueChange = {
+                        if (selectedTabIndex == 0) {
+                            viewModel.updateMyGroupsSearchQuery(it)
+                        } else {
+                            viewModel.updateSearchQuery(it)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Buscar grupos...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    trailingIcon = {
+                        val currentQuery = if (selectedTabIndex == 0) myGroupsSearchQuery else searchQuery
+                        if (currentQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                if (selectedTabIndex == 0) {
+                                    viewModel.updateMyGroupsSearchQuery("")
+                                } else {
+                                    viewModel.updateSearchQuery("")
                                 }
+                            }) {
+                                Icon(Icons.Default.Close, "Limpar busca")
                             }
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(
-                            onSearch = { keyboardController?.hide() }
-                        )
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { keyboardController?.hide() }
                     )
-                }
+                )
             }
         },
         floatingActionButton = {
