@@ -1,7 +1,9 @@
 package pies3.workit.data.repository
 
 import pies3.workit.data.api.UserApi
+import pies3.workit.data.dto.group.GroupListResponse
 import pies3.workit.data.dto.user.UpdateUserRequest
+import pies3.workit.data.dto.user.UserGroup
 import pies3.workit.data.dto.user.UserResponse
 import javax.inject.Inject
 
@@ -30,6 +32,21 @@ class UserRepository @Inject constructor(
             val request = UpdateUserRequest(name, email)
             val response = userApi.updateUser(userId, request)
             Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun getUserGroups(userId: String): Result<List<UserGroup>> {
+        return try {
+            val user = userApi.getUserById(userId)
+
+            val groups = if (user.groups != null) {
+                user.groups
+            } else {
+                emptyList()
+            }
+
+            Result.success(groups)
         } catch (e: Exception) {
             Result.failure(e)
         }
