@@ -14,13 +14,112 @@ export class GroupsService {
       data: {
         name,
         description,
-        imgUrl: imageUrl, 
+        imgUrl: imageUrl,
       },
     });
   }
 
   async findAll() {
     const groups = await this.prisma.group.findMany({
+      include: {
+        users: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      imageUrl: group.imgUrl ?? null,
+      description: group.description ?? null,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt ?? null,
+      users: group.users.map((gu) => ({
+        id: gu.user.id,
+        name: gu.user.name,
+      })),
+    }));
+  }
+
+  async findGroupsNotJoined(userId: string) {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        users: {
+          none: {
+            userId,
+          },
+        },
+      },
+      include: {
+        users: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      imageUrl: group.imgUrl ?? null,
+      description: group.description ?? null,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt ?? null,
+      users: group.users.map((gu) => ({
+        id: gu.user.id,
+        name: gu.user.name,
+      })),
+    }));
+  }
+
+  async searchByName(name: string) {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        users: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      imageUrl: group.imgUrl ?? null,
+      description: group.description ?? null,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt ?? null,
+      users: group.users.map((gu) => ({
+        id: gu.user.id,
+        name: gu.user.name,
+      })),
+    }));
+  }
+
+  async searchUserGroups(userId: string, name: string) {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
+        },
+        users: {
+          some: {
+            userId,
+          },
+        },
+      },
       include: {
         users: {
           include: {
@@ -57,7 +156,7 @@ export class GroupsService {
     });
 
     if (!group) {
-      return null; 
+      return null;
     }
 
     return {
@@ -81,7 +180,7 @@ export class GroupsService {
   remove(id: string) {
     return this.prisma.group.delete({ where: { id } });
   }
-  
+
   addUserToGroup(groupId: string, userId: string) {
     return this.prisma.groupUser.create({
       data: {

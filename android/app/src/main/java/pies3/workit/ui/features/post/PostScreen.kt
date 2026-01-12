@@ -1,5 +1,9 @@
 package pies3.workit.ui.features.post
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -20,6 +24,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Videocam
@@ -31,20 +36,79 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import pies3.workit.ui.features.groups.GroupsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostScreen() {
-    var selectedGroup by remember { mutableStateOf("") }
+fun PostScreen(
+    onNavigateBack: () -> Unit,
+    onPostCreated: () -> Unit = {},
+    createPostViewModel: CreatePostViewModel = hiltViewModel(),
+    groupsViewModel: GroupsViewModel = hiltViewModel()
+) {
+    val createPostState by createPostViewModel.createPostState.collectAsStateWithLifecycle()
+    val myGroupsState by groupsViewModel.myGroupsState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    var selectedGroup by remember { mutableStateOf<String?>(null) }
+    var selectedGroupName by remember { mutableStateOf("") }
     var activityType by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var currentLocation by remember { mutableStateOf<Location?>(null) }
+    var locationPermissionGranted by remember { mutableStateOf(false) }
 
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var selectedVideo by remember { mutableStateOf<Uri?>(null) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        locationPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (locationPermissionGranted) {
+            getCurrentLocation(context) { location ->
+                currentLocation = location
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val hasFinePermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val hasCoarsePermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasFinePermission || hasCoarsePermission) {
+            locationPermissionGranted = true
+            getCurrentLocation(context) { location ->
+                currentLocation = location
+            }
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3)
@@ -58,8 +122,29 @@ fun PostScreen() {
         selectedVideo = uri
     }
 
-    val groups = listOf("Corredores da Manhã", "Esquadrão de Força", "Yoga Flow")
-    val activities = listOf("Corrida", "Levantamento de Peso", "Yoga", "Ciclismo", "HIIT")
+    val activityTypeMap = mapOf(
+        "Corrida" to "RUNNING",
+        "Caminhada" to "WALKING",
+        "Ciclismo" to "CYCLING",
+        "Levantamento de Peso" to "WEIGHT_TRAINING",
+        "Natação" to "SWIMMING",
+        "Yoga" to "OTHER",
+        "HIIT" to "OTHER",
+        "Boxe" to "OTHER",
+        "CrossFit" to "OTHER"
+    )
+
+    val activities = listOf("Corrida", "Caminhada", "Ciclismo", "Levantamento de Peso", "Natação", "Yoga", "HIIT", "Boxe", "CrossFit")
+
+    LaunchedEffect(createPostState) {
+        when (createPostState) {
+            is CreatePostUiState.Success -> {
+                createPostViewModel.resetState()
+                onPostCreated()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -81,18 +166,36 @@ fun PostScreen() {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ModernDropdown(
-                    label = "Selecionar Grupo",
-                    options = groups,
-                    selectedOption = selectedGroup,
-                    onOptionSelected = { selectedGroup = it },
-                    icon = Icons.Default.Groups
-                )
+                when (val state = myGroupsState) {
+                    is pies3.workit.ui.features.groups.GroupsUiState.Success -> {
+                        val groupOptions = state.groups.map { it.name }
+                        val groupIdMap = state.groups.associate { it.name to it.id }
+
+                        ModernDropdown(
+                            label = "Selecionar Grupo",
+                            options = groupOptions,
+                            selectedOption = selectedGroupName,
+                            onOptionSelected = { name ->
+                                selectedGroupName = name
+                                selectedGroup = groupIdMap[name]
+                            },
+                            icon = Icons.Default.Groups
+                        )
+                    }
+                    is pies3.workit.ui.features.groups.GroupsUiState.Error -> {
+                        Text(
+                            text = "Erro ao carregar grupos",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    else -> {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -107,11 +210,10 @@ fun PostScreen() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("Localização") },
-                    placeholder = { Text("Onde você treinou?") },
-                    leadingIcon = { Icon(Icons.Default.LocationOn, null) },
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título") },
+                    placeholder = { Text("Ex: Treino matinal incrível!") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -121,6 +223,37 @@ fun PostScreen() {
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+               if (!locationPermissionGranted) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Permissão de localização negada",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                        }
+                    }
+                }
+
 
                 OutlinedTextField(
                     value = description,
@@ -203,10 +336,37 @@ fun PostScreen() {
                     }
                 }
 
+                if (createPostState is CreatePostUiState.Error) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = (createPostState as CreatePostUiState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = {
+                        selectedGroup?.let { groupId ->
+                            val mappedActivityType = activityTypeMap[activityType] ?: "OTHER"
+                            val locationString = currentLocation?.let {
+                                "${it.latitude},${it.longitude}"
+                            }
+                            createPostViewModel.createPost(
+                                title = title.ifBlank { activityType },
+                                activityType = mappedActivityType,
+                                body = description.ifBlank { null },
+                                imageUrl = null,
+                                location = locationString,
+                                groupId = groupId
+                            )
+                        }
+                    },
+                    enabled = createPostState !is CreatePostUiState.Loading &&
+                            activityType.isNotBlank() &&
+                            selectedGroup != null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -215,11 +375,18 @@ fun PostScreen() {
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Text(
-                        "Publicar Atividade",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (createPostState is CreatePostUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            "Publicar Atividade",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -232,6 +399,24 @@ fun PostScreen() {
     }
 }
 
+private fun getCurrentLocation(context: Context, onLocationReceived: (Location) -> Unit) {
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    try {
+        val cancellationTokenSource = CancellationTokenSource()
+
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            cancellationTokenSource.token
+        ).addOnSuccessListener { location ->
+            location?.let {
+                onLocationReceived(it)
+            }
+        }
+    } catch (e: SecurityException) {
+        e.printStackTrace()
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

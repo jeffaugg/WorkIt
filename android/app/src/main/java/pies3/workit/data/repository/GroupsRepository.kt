@@ -29,6 +29,24 @@ class GroupsRepository @Inject constructor(
         }
     }
 
+    suspend fun getExploreGroups(userId: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.getExploreGroups(userId)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun searchGroups(name: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.searchGroups(name)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getGroupById(groupId: String): Result<GroupListResponse> {
         return try {
             val response = groupApi.getGroupById(groupId)
@@ -42,6 +60,24 @@ class GroupsRepository @Inject constructor(
         return try {
             val response = groupApi.joinGroup(groupId, userId)
             Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun searchUserGroups(userId: String, name: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.searchUserGroups(userId, name)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun leaveGroup(groupId: String, userId: String): Result<Unit> {
+        return try {
+            groupApi.leaveGroup(groupId, userId)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

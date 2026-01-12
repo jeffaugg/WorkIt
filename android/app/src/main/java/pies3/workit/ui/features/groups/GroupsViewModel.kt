@@ -35,9 +35,18 @@ class GroupsViewModel @Inject constructor(
     private val _joinGroupState = MutableStateFlow<JoinGroupUiState>(JoinGroupUiState.Idle)
     val joinGroupState: StateFlow<JoinGroupUiState> = _joinGroupState.asStateFlow()
 
+    private val _leaveGroupState = MutableStateFlow<LeaveGroupUiState>(LeaveGroupUiState.Idle)
+    val leaveGroupState: StateFlow<LeaveGroupUiState> = _leaveGroupState.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _myGroupsSearchQuery = MutableStateFlow("")
+    val myGroupsSearchQuery: StateFlow<String> = _myGroupsSearchQuery.asStateFlow()
+
     init {
         loadMyGroups()
-        loadAllGroups()
+        loadExploreGroups()
     }
 
     fun loadMyGroups() {
@@ -81,12 +90,19 @@ class GroupsViewModel @Inject constructor(
         }
     }
 
-    fun loadAllGroups() {
+    fun loadExploreGroups() {
         viewModelScope.launch {
             try {
                 _allGroupsState.value = GroupsUiState.Loading
 
-                val result = groupsRepository.getGroups()
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    _allGroupsState.value = GroupsUiState.Error("Usu\u00e1rio n\u00e3o autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.getExploreGroups(userId)
 
                 _allGroupsState.value = when {
                     result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
@@ -135,7 +151,7 @@ class GroupsViewModel @Inject constructor(
                 }
 
                 loadMyGroups()
-                loadAllGroups()
+                loadExploreGroups()
 
                 _createGroupState.value = CreateGroupUiState.Success(createdGroup)
 
@@ -164,7 +180,7 @@ class GroupsViewModel @Inject constructor(
                 _joinGroupState.value = when {
                     result.isSuccess -> {
                         loadMyGroups()
-                        loadAllGroups()
+                        loadExploreGroups()
                         JoinGroupUiState.Success(result.getOrThrow())
                     }
                     else -> {
@@ -179,12 +195,116 @@ class GroupsViewModel @Inject constructor(
         }
     }
 
+    fun leaveGroup(groupId: String) {
+        viewModelScope.launch {
+            try {
+                _leaveGroupState.value = LeaveGroupUiState.Loading
+
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    Log.e("GroupsViewModel", "UserId é null - usuário não autenticado")
+                    _leaveGroupState.value = LeaveGroupUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.leaveGroup(groupId, userId)
+
+                _leaveGroupState.value = when {
+                    result.isSuccess -> {
+                        loadMyGroups()
+                        loadExploreGroups()
+                        LeaveGroupUiState.Success
+                    }
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao sair do grupo: ${result.exceptionOrNull()?.message}")
+                        LeaveGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao sair do grupo")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao sair do grupo", e)
+                _leaveGroupState.value = LeaveGroupUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
     fun resetCreateGroupState() {
         _createGroupState.value = CreateGroupUiState.Idle
     }
 
     fun resetJoinGroupState() {
         _joinGroupState.value = JoinGroupUiState.Idle
+    }
+
+    fun resetLeaveGroupState() {
+        _leaveGroupState.value = LeaveGroupUiState.Idle
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        if (query.isNotEmpty()) {
+            searchGroups(query)
+        } else {
+            loadExploreGroups()
+        }
+    }
+
+    fun updateMyGroupsSearchQuery(query: String) {
+        _myGroupsSearchQuery.value = query
+        if (query.isNotEmpty()) {
+            searchMyGroups(query)
+        } else {
+            loadMyGroups()
+        }
+    }
+
+    private fun searchGroups(name: String) {
+        viewModelScope.launch {
+            try {
+                _allGroupsState.value = GroupsUiState.Loading
+
+                val result = groupsRepository.searchGroups(name)
+
+                _allGroupsState.value = when {
+                    result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao buscar grupos: ${result.exceptionOrNull()?.message}")
+                        GroupsUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao buscar grupos")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao buscar grupos", e)
+                _allGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    private fun searchMyGroups(name: String) {
+        viewModelScope.launch {
+            try {
+                _myGroupsState.value = GroupsUiState.Loading
+
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    _myGroupsState.value = GroupsUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.searchUserGroups(userId, name)
+
+                _myGroupsState.value = when {
+                    result.isSuccess -> GroupsUiState.Success(result.getOrThrow())
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao buscar meus grupos: ${result.exceptionOrNull()?.message}")
+                        GroupsUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao buscar meus grupos")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao buscar meus grupos", e)
+                _myGroupsState.value = GroupsUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
     }
 }
 
@@ -206,4 +326,11 @@ sealed class JoinGroupUiState {
     object Loading : JoinGroupUiState()
     data class Success(val result: JoinGroupResponse) : JoinGroupUiState()
     data class Error(val message: String) : JoinGroupUiState()
+}
+
+sealed class LeaveGroupUiState {
+    object Idle : LeaveGroupUiState()
+    object Loading : LeaveGroupUiState()
+    object Success : LeaveGroupUiState()
+    data class Error(val message: String) : LeaveGroupUiState()
 }

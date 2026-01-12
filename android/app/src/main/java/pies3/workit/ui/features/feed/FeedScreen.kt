@@ -28,107 +28,41 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pies3.workit.data.dto.post.PostResponse
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 enum class ActivityTypeUI {
     RUNNING, WALKING, CYCLING, WEIGHT_TRAINING, SWIMMING, OTHER
 }
 
-data class PostUI(
-    val id: String,
-    val title: String,
-    val activityType: ActivityTypeUI,
-    val body: String?,
-    val imageUrl: String?,
-    val location: String?,
-    val timeAgo: String,
-    val userName: String,
-    val userAvatarUrl: String?,
-    val groupName: String
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen() {
+fun FeedScreen(
+    viewModel: FeedViewModel = hiltViewModel(),
+    onPostClick: (String) -> Unit = {},
+    shouldRefresh: Boolean = false,
+    onRefreshHandled: () -> Unit = {}
+) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val scope = rememberCoroutineScope()
+    val feedState by viewModel.feedState.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
-    var posts by remember {
-        mutableStateOf(
-            listOf(
-                PostUI(
-                    id = "1",
-                    title = "Corrida no Parque",
-                    activityType = ActivityTypeUI.RUNNING,
-                    body = "Hoje o ritmo foi intenso! Consegui baixar meu tempo em 30 segundos. O visual ajudou demais.",
-                    imageUrl = "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=500&auto=format&fit=crop&q=60",
-                    location = "Parque da Cidade",
-                    timeAgo = "2h atrás",
-                    userName = "Ana Silva",
-                    userAvatarUrl = "https://images.unsplash.com/photo-1621398944996-b8e0d40fca71?w=500&auto=format&fit=crop&q=60",
-                    groupName = "Corredores da Manhã"
-                ),
-                PostUI(
-                    id = "2",
-                    title = "Leg Day Pesado",
-                    activityType = ActivityTypeUI.WEIGHT_TRAINING,
-                    body = "Foco total na execução hoje. Agachamento com 100kg batido!",
-                    imageUrl = "https://plus.unsplash.com/premium_photo-1676634832558-6654a134e920?q=80&w=1471&auto=format&fit=crop",
-                    location = "Academia Ironberg",
-                    timeAgo = "5h atrás",
-                    userName = "Carlos Souza",
-                    userAvatarUrl = "https://images.unsplash.com/photo-1625262550495-1d3bfb5c1502?w=500&auto=format&fit=crop&q=60",
-                    groupName = "Esquadrão da Força"
-                ),
-                PostUI(
-                    id = "3",
-                    title = "Trilha de Domingo",
-                    activityType = ActivityTypeUI.CYCLING,
-                    body = "A lama faz parte da diversão! Trilha técnica hoje.",
-                    imageUrl = "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&auto=format&fit=crop&q=60",
-                    location = "Serra do Mar",
-                    timeAgo = "Ontem",
-                    userName = "Marina Costa",
-                    userAvatarUrl = "https://images.unsplash.com/photo-1625012612550-622fe6a78a05?w=500&auto=format&fit=crop&q=60",
-                    groupName = "Clube do Pedal"
-                ),
-                PostUI(
-                    id = "4",
-                    title = "Futebol com a Galera",
-                    activityType = ActivityTypeUI.OTHER,
-                    body = "Nada como um jogo no fim de semana para relaxar e suar a camisa.",
-                    imageUrl = "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=500&auto=format&fit=crop&q=60",
-                    location = "Arena Society",
-                    timeAgo = "1d atrás",
-                    userName = "Lucas Pereira",
-                    userAvatarUrl = null,
-                    groupName = "Futebol de Quarta"
-                ),
-                PostUI(
-                    id = "5",
-                    title = "Treino de Tiro",
-                    activityType = ActivityTypeUI.RUNNING,
-                    body = "Focando na velocidade hoje. 10x 400m.",
-                    imageUrl = "https://images.unsplash.com/photo-1617085606193-6b17105cff2a?w=500&auto=format&fit=crop&q=60",
-                    location = "Pista de Atletismo",
-                    timeAgo = "2d atrás",
-                    userName = "Fernanda Lima",
-                    userAvatarUrl = "https://images.unsplash.com/photo-1621398944996-b8e0d40fca71?w=500&auto=format&fit=crop&q=60",
-                    groupName = "Atletismo Pro"
-                ),
-                PostUI(
-                    id = "6",
-                    title = "Nascer do Sol na Estrada",
-                    activityType = ActivityTypeUI.CYCLING,
-                    body = "Acordar cedo tem suas recompensas.",
-                    imageUrl = "https://images.unsplash.com/photo-1444491741275-3747c53c99b4?w=500&auto=format&fit=crop&q=60",
-                    location = "Rodovia dos Bandeirantes",
-                    timeAgo = "3d atrás",
-                    userName = "Roberto Alves",
-                    userAvatarUrl = "https://images.unsplash.com/photo-1625262550495-1d3bfb5c1502?w=500&auto=format&fit=crop&q=60",
-                    groupName = "Speed Cycling"
-                )
-            )
-        )
+
+    LaunchedEffect(feedState) {
+        if (feedState !is FeedUiState.Loading) {
+            isRefreshing = false
+        }
+    }
+
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.refresh()
+            onRefreshHandled()
+        }
     }
 
     Scaffold(
@@ -155,29 +89,73 @@ fun FeedScreen() {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
-                scope.launch {
-                    isRefreshing = true
-                    delay(2000)
-                    isRefreshing = false
-                }
+                isRefreshing = true
+                viewModel.refresh()
             },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (posts.isEmpty()) {
-                EmptyFeedState()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 100.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(posts) { post ->
-                        PostCard(post = post)
+            when (val state = feedState) {
+                is FeedUiState.Loading -> {
+                    if (!isRefreshing) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                    item {
-                        EndOfFeedIndicator()
+                }
+                is FeedUiState.Empty -> EmptyFeedState()
+                is FeedUiState.Success -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.posts) { post ->
+                            PostCard(
+                                post = post,
+                                onClick = { onPostClick(post.id) }
+                            )
+                        }
+                        item {
+                            EndOfFeedIndicator()
+                        }
+                    }
+                }
+                is FeedUiState.Error -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Error,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Erro ao carregar posts",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.refresh() }) {
+                            Text("Tentar Novamente")
+                        }
                     }
                 }
             }
@@ -186,8 +164,9 @@ fun FeedScreen() {
 }
 
 @Composable
-fun PostCard(post: PostUI) {
+fun PostCard(post: PostResponse, onClick: () -> Unit = {}) {
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -207,22 +186,26 @@ fun PostCard(post: PostUI) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                AsyncImage(
-                    model = post.userAvatarUrl,
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop,
-                    placeholder = null
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = post.user.name.firstOrNull()?.uppercase() ?: "?",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = post.userName,
+                        text = post.user.name,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -232,7 +215,7 @@ fun PostCard(post: PostUI) {
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = post.groupName,
+                            text = post.group.name,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium,
@@ -242,7 +225,7 @@ fun PostCard(post: PostUI) {
                         )
 
                         Text(
-                            text = " • ${post.timeAgo}",
+                            text = " • ${formatTimeAgo(post.createdAt)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1
@@ -251,7 +234,7 @@ fun PostCard(post: PostUI) {
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
-                ActivityBadge(post.activityType)
+                ActivityBadge(mapActivityType(post.activityType))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -263,23 +246,23 @@ fun PostCard(post: PostUI) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (!post.location.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = post.location,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+//            if (!post.location.isNullOrEmpty()) {
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Row(verticalAlignment = Alignment.CenterVertically) {
+//                    Icon(
+//                        Icons.Default.LocationOn,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(14.dp),
+//                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                    Spacer(modifier = Modifier.width(4.dp))
+//                    Text(
+//                        text = post.location,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                }
+//            }
 
             if (!post.body.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -306,6 +289,39 @@ fun PostCard(post: PostUI) {
                 )
             }
         }
+    }
+}
+
+fun mapActivityType(activityType: String): ActivityTypeUI {
+    return when (activityType) {
+        "RUNNING" -> ActivityTypeUI.RUNNING
+        "WALKING" -> ActivityTypeUI.WALKING
+        "CYCLING" -> ActivityTypeUI.CYCLING
+        "WEIGHT_TRAINING" -> ActivityTypeUI.WEIGHT_TRAINING
+        "SWIMMING" -> ActivityTypeUI.SWIMMING
+        else -> ActivityTypeUI.OTHER
+    }
+}
+
+fun formatTimeAgo(dateString: String): String {
+    return try {
+        val instant = Instant.parse(dateString)
+        val now = Instant.now()
+        val duration = Duration.between(instant, now)
+
+        when {
+            duration.toDays() > 7 -> {
+                val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                    .withZone(ZoneId.systemDefault())
+                formatter.format(instant)
+            }
+            duration.toDays() > 0 -> "${duration.toDays()}d atrás"
+            duration.toHours() > 0 -> "${duration.toHours()}h atrás"
+            duration.toMinutes() > 0 -> "${duration.toMinutes()}m atrás"
+            else -> "Agora"
+        }
+    } catch (e: Exception) {
+        "Há algum tempo"
     }
 }
 

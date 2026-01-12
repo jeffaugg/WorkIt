@@ -8,8 +8,10 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import pies3.workit.data.api.AuthApi
 import pies3.workit.data.api.GroupApi
+import pies3.workit.data.api.PostApi
 import pies3.workit.data.api.UserApi
 import pies3.workit.data.interceptors.AuthInterceptor
+import pies3.workit.data.repository.PostsRepository
 import pies3.workit.data.repository.UserRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -77,5 +79,17 @@ object NetworkModule {
     @Singleton
     fun provideUserRepository(userApi: UserApi): UserRepository {
         return UserRepository(userApi)
+    }
+
+    @Provides
+    @Singleton
+    fun providePostApi(retrofit: Retrofit): PostApi {
+        return retrofit.create(PostApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providePostsRepository(postApi: PostApi): PostsRepository {
+        return PostsRepository(postApi)
     }
 }

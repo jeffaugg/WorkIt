@@ -3,16 +3,22 @@ package pies3.workit.ui.features.groups
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.groups.components.CreateGroupDialog
@@ -22,7 +28,8 @@ import pies3.workit.ui.features.groups.components.GroupCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
-    viewModel: GroupsViewModel = hiltViewModel()
+    viewModel: GroupsViewModel = hiltViewModel(),
+    onGroupClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -31,6 +38,9 @@ fun GroupsScreen(
     val myGroupsState by viewModel.myGroupsState.collectAsState()
     val allGroupsState by viewModel.allGroupsState.collectAsState()
     val joinGroupState by viewModel.joinGroupState.collectAsState()
+    val leaveGroupState by viewModel.leaveGroupState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val myGroupsSearchQuery by viewModel.myGroupsSearchQuery.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -96,6 +106,27 @@ fun GroupsScreen(
         }
     }
 
+    LaunchedEffect(leaveGroupState) {
+        when (leaveGroupState) {
+            is LeaveGroupUiState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Você saiu do grupo com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetLeaveGroupState()
+            }
+            is LeaveGroupUiState.Error -> {
+                val errorMessage = (leaveGroupState as LeaveGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetLeaveGroupState()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -128,6 +159,42 @@ fun GroupsScreen(
                         icon = { Icon(Icons.Default.Explore, null) }
                     )
                 }
+
+                val keyboardController = LocalSoftwareKeyboardController.current
+                OutlinedTextField(
+                    value = if (selectedTabIndex == 0) myGroupsSearchQuery else searchQuery,
+                    onValueChange = {
+                        if (selectedTabIndex == 0) {
+                            viewModel.updateMyGroupsSearchQuery(it)
+                        } else {
+                            viewModel.updateSearchQuery(it)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Buscar grupos...") },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    trailingIcon = {
+                        val currentQuery = if (selectedTabIndex == 0) myGroupsSearchQuery else searchQuery
+                        if (currentQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                if (selectedTabIndex == 0) {
+                                    viewModel.updateMyGroupsSearchQuery("")
+                                } else {
+                                    viewModel.updateSearchQuery("")
+                                }
+                            }) {
+                                Icon(Icons.Default.Close, "Limpar busca")
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { keyboardController?.hide() }
+                    )
+                )
             }
         },
         floatingActionButton = {
@@ -173,7 +240,7 @@ fun GroupsScreen(
                             if (selectedTabIndex == 0) {
                                 viewModel.loadMyGroups()
                             } else {
-                                viewModel.loadAllGroups()
+                                viewModel.loadExploreGroups()
                             }
                         }) {
                             Text("Tentar novamente")
@@ -185,6 +252,7 @@ fun GroupsScreen(
                 val groups = state.groups
                 val isMember = selectedTabIndex == 0
                 val isJoining = joinGroupState is JoinGroupUiState.Loading
+                val isLeaving = leaveGroupState is LeaveGroupUiState.Loading
 
                 LazyColumn(
                     modifier = Modifier
@@ -220,17 +288,19 @@ fun GroupsScreen(
                                     name = group.name,
                                     description = group.description ?: "",
                                     memberCount = group.users.size,
-                                    isAdmin = false, // TODO: verificar se o usuário é admin
+                                    isAdmin = false,
                                     imageUrl = group.imageUrl ?: ""
                                 ),
                                 isMember = isMember,
                                 onActionClick = {
-                                    if (!isMember) {
+                                    if (isMember) {
+                                        viewModel.leaveGroup(group.id)
+                                    } else {
                                         viewModel.joinGroup(group.id)
                                     }
                                 },
-                                onCardClick = {},
-                                isLoading = isJoining
+                                onCardClick = { onGroupClick(group.id, group.name) },
+                                isLoading = isJoining || isLeaving
                             )
                         }
                     }
