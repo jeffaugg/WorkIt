@@ -65,7 +65,11 @@ fun GroupCard(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.2f))
+                    )
                 } else {
                     Box(
                         modifier = Modifier
@@ -94,9 +98,19 @@ fun GroupCard(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Shield, null, modifier = Modifier.size(12.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Icon(
+                                Icons.Default.Shield,
+                                null,
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Admin", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Text(
+                                "Admin",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
                     }
                 }
@@ -122,9 +136,18 @@ fun GroupCard(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Group, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Default.Group,
+                        null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("${group.memberCount} membros", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${group.memberCount} membros",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 HorizontalDivider(
@@ -137,23 +160,23 @@ fun GroupCard(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     if (isMember) {
-                        FilledTonalButton(
+                        OutlinedButton(
                             onClick = onActionClick,
                             modifier = Modifier.width(110.dp),
                             shape = RoundedCornerShape(8.dp),
-                            enabled = !isLoading
+                            enabled = !isLoading,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                         ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text("Sair")
-                            }
+                            Text("Sair", color = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Sair do grupo",
+                                tint = MaterialTheme.colorScheme.error
+                            )
                         }
+
                     } else {
                         Button(
                             onClick = onActionClick,
