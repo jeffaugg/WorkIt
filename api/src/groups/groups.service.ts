@@ -14,7 +14,7 @@ export class GroupsService {
       data: {
         name,
         description,
-        imgUrl: imageUrl, 
+        imgUrl: imageUrl,
       },
     });
   }
@@ -57,7 +57,7 @@ export class GroupsService {
     });
 
     if (!group) {
-      return null; 
+      return null;
     }
 
     return {
@@ -81,7 +81,7 @@ export class GroupsService {
   remove(id: string) {
     return this.prisma.group.delete({ where: { id } });
   }
-  
+
   addUserToGroup(groupId: string, userId: string) {
     return this.prisma.groupUser.create({
       data: {
