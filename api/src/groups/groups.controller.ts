@@ -28,6 +28,16 @@ export class GroupsController {
     return this.groupsService.findAll();
   }
 
+  @Get('explore/:userId')
+  findGroupsNotJoined(@Param('userId') userId: string) {
+    return this.groupsService.findGroupsNotJoined(userId);
+  }
+
+  @Get('search/:name')
+  searchByName(@Param('name') name: string) {
+    return this.groupsService.searchByName(name);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.groupsService.findOne(id);

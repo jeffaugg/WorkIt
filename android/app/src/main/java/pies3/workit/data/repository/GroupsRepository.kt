@@ -29,6 +29,24 @@ class GroupsRepository @Inject constructor(
         }
     }
 
+    suspend fun getExploreGroups(userId: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.getExploreGroups(userId)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun searchGroups(name: String): Result<List<GroupListResponse>> {
+        return try {
+            val response = groupApi.searchGroups(name)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getGroupById(groupId: String): Result<GroupListResponse> {
         return try {
             val response = groupApi.getGroupById(groupId)

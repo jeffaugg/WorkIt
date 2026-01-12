@@ -3,16 +3,22 @@ package pies3.workit.ui.features.groups
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.groups.components.CreateGroupDialog
@@ -33,6 +39,7 @@ fun GroupsScreen(
     val allGroupsState by viewModel.allGroupsState.collectAsState()
     val joinGroupState by viewModel.joinGroupState.collectAsState()
     val leaveGroupState by viewModel.leaveGroupState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -151,6 +158,31 @@ fun GroupsScreen(
                         icon = { Icon(Icons.Default.Explore, null) }
                     )
                 }
+
+                if (selectedTabIndex == 1) {
+                    val keyboardController = LocalSoftwareKeyboardController.current
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.updateSearchQuery(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        placeholder = { Text("Buscar grupos...") },
+                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                    Icon(Icons.Default.Close, "Limpar busca")
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = { keyboardController?.hide() }
+                        )
+                    )
+                }
             }
         },
         floatingActionButton = {
@@ -196,7 +228,7 @@ fun GroupsScreen(
                             if (selectedTabIndex == 0) {
                                 viewModel.loadMyGroups()
                             } else {
-                                viewModel.loadAllGroups()
+                                viewModel.loadExploreGroups()
                             }
                         }) {
                             Text("Tentar novamente")

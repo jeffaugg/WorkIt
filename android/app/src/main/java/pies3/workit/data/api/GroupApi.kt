@@ -17,6 +17,12 @@ interface GroupApi{
     @GET("groups")
     suspend fun getGroups(): List<GroupListResponse>
 
+    @GET("groups/explore/{userId}")
+    suspend fun getExploreGroups(@Path("userId") userId: String): List<GroupListResponse>
+
+    @GET("groups/search/{name}")
+    suspend fun searchGroups(@Path("name") name: String): List<GroupListResponse>
+
     @GET("groups/{id}")
     suspend fun getGroupById(@Path("id") id: String): GroupListResponse
 

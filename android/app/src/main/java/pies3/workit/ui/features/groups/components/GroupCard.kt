@@ -163,7 +163,7 @@ fun GroupCard(
                     if (isMember) {
                         OutlinedButton(
                             onClick = onActionClick,
-                            modifier = Modifier.width(110.dp),
+                            modifier = Modifier.width(100.dp),
                             shape = RoundedCornerShape(8.dp),
                             enabled = !isLoading,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
