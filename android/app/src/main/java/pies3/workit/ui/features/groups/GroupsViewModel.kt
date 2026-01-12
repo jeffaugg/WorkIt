@@ -35,6 +35,9 @@ class GroupsViewModel @Inject constructor(
     private val _joinGroupState = MutableStateFlow<JoinGroupUiState>(JoinGroupUiState.Idle)
     val joinGroupState: StateFlow<JoinGroupUiState> = _joinGroupState.asStateFlow()
 
+    private val _leaveGroupState = MutableStateFlow<LeaveGroupUiState>(LeaveGroupUiState.Idle)
+    val leaveGroupState: StateFlow<LeaveGroupUiState> = _leaveGroupState.asStateFlow()
+
     init {
         loadMyGroups()
         loadAllGroups()
@@ -179,12 +182,49 @@ class GroupsViewModel @Inject constructor(
         }
     }
 
+    fun leaveGroup(groupId: String) {
+        viewModelScope.launch {
+            try {
+                _leaveGroupState.value = LeaveGroupUiState.Loading
+
+                val userId = tokenManager.getUserId()
+
+                if (userId == null) {
+                    Log.e("GroupsViewModel", "UserId é null - usuário não autenticado")
+                    _leaveGroupState.value = LeaveGroupUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val result = groupsRepository.leaveGroup(groupId, userId)
+
+                _leaveGroupState.value = when {
+                    result.isSuccess -> {
+                        loadMyGroups()
+                        loadAllGroups()
+                        LeaveGroupUiState.Success
+                    }
+                    else -> {
+                        Log.e("GroupsViewModel", "Erro ao sair do grupo: ${result.exceptionOrNull()?.message}")
+                        LeaveGroupUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao sair do grupo")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupsViewModel", "Exception ao sair do grupo", e)
+                _leaveGroupState.value = LeaveGroupUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
     fun resetCreateGroupState() {
         _createGroupState.value = CreateGroupUiState.Idle
     }
 
     fun resetJoinGroupState() {
         _joinGroupState.value = JoinGroupUiState.Idle
+    }
+
+    fun resetLeaveGroupState() {
+        _leaveGroupState.value = LeaveGroupUiState.Idle
     }
 }
 
@@ -206,4 +246,11 @@ sealed class JoinGroupUiState {
     object Loading : JoinGroupUiState()
     data class Success(val result: JoinGroupResponse) : JoinGroupUiState()
     data class Error(val message: String) : JoinGroupUiState()
+}
+
+sealed class LeaveGroupUiState {
+    object Idle : LeaveGroupUiState()
+    object Loading : LeaveGroupUiState()
+    object Success : LeaveGroupUiState()
+    data class Error(val message: String) : LeaveGroupUiState()
 }

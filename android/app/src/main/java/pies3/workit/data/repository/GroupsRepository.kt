@@ -46,4 +46,13 @@ class GroupsRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun leaveGroup(groupId: String, userId: String): Result<Unit> {
+        return try {
+            groupApi.leaveGroup(groupId, userId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

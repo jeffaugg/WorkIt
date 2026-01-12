@@ -5,6 +5,7 @@ import pies3.workit.data.dto.group.CreateGroupResponse
 import pies3.workit.data.dto.group.GroupListResponse
 import pies3.workit.data.dto.group.JoinGroupResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -24,4 +25,10 @@ interface GroupApi{
         @Path("groupId") groupId: String,
         @Path("userId") userId: String
     ): JoinGroupResponse
+
+    @DELETE("groups/{groupId}/users/{userId}")
+    suspend fun leaveGroup(
+        @Path("groupId") groupId: String,
+        @Path("userId") userId: String
+    )
 }

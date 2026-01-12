@@ -32,6 +32,7 @@ fun GroupsScreen(
     val myGroupsState by viewModel.myGroupsState.collectAsState()
     val allGroupsState by viewModel.allGroupsState.collectAsState()
     val joinGroupState by viewModel.joinGroupState.collectAsState()
+    val leaveGroupState by viewModel.leaveGroupState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -94,6 +95,27 @@ fun GroupsScreen(
                 viewModel.resetJoinGroupState()
             }
             else -> { /* Idle ou Loading */ }
+        }
+    }
+
+    LaunchedEffect(leaveGroupState) {
+        when (leaveGroupState) {
+            is LeaveGroupUiState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Você saiu do grupo com sucesso!",
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.resetLeaveGroupState()
+            }
+            is LeaveGroupUiState.Error -> {
+                val errorMessage = (leaveGroupState as LeaveGroupUiState.Error).message
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.resetLeaveGroupState()
+            }
+            else -> {}
         }
     }
 
@@ -186,6 +208,7 @@ fun GroupsScreen(
                 val groups = state.groups
                 val isMember = selectedTabIndex == 0
                 val isJoining = joinGroupState is JoinGroupUiState.Loading
+                val isLeaving = leaveGroupState is LeaveGroupUiState.Loading
 
                 LazyColumn(
                     modifier = Modifier
@@ -221,17 +244,19 @@ fun GroupsScreen(
                                     name = group.name,
                                     description = group.description ?: "",
                                     memberCount = group.users.size,
-                                    isAdmin = false, // TODO: verificar se o usuário é admin
+                                    isAdmin = false,
                                     imageUrl = group.imageUrl ?: ""
                                 ),
                                 isMember = isMember,
                                 onActionClick = {
-                                    if (!isMember) {
+                                    if (isMember) {
+                                        viewModel.leaveGroup(group.id)
+                                    } else {
                                         viewModel.joinGroup(group.id)
                                     }
                                 },
                                 onCardClick = { onGroupClick(group.id, group.name) },
-                                isLoading = isJoining
+                                isLoading = isJoining || isLeaving
                             )
                         }
                     }

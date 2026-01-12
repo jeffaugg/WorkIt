@@ -139,45 +139,36 @@ fun GroupCard(
                 ) {
 
                     if (isMember) {
-                        if (group.isAdmin) {
-                            IconButton(onClick = onActionClick) {
-                                Icon(
-                                    Icons.Default.Settings,
-                                    contentDescription = "Configurações",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        } else {
-                            IconButton(onClick = onActionClick) {
-                                Icon(
-                                    Icons.Default.ExitToApp,
-                                    contentDescription = "Sair do grupo",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
-
-                    } else {
-                        Button(
+                        FilledTonalButton(
                             onClick = onActionClick,
+                            modifier = Modifier.width(110.dp),
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
                             enabled = !isLoading
                         ) {
                             if (isLoading) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(16.dp),
                                     strokeWidth = 2.dp
                                 )
                             } else {
-                                Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Participar do Grupo")
+                                Text("Sair")
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = onActionClick,
+                            modifier = Modifier.width(110.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            enabled = !isLoading
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text("Participar")
                             }
                         }
                     }
