@@ -8,6 +8,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,7 +49,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import pies3.workit.ui.features.groups.GroupsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PostScreen(
     onNavigateBack: () -> Unit,
@@ -68,8 +69,7 @@ fun PostScreen(
     var currentLocation by remember { mutableStateOf<Location?>(null) }
     var locationPermissionGranted by remember { mutableStateOf(false) }
 
-    var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var selectedVideo by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -110,16 +110,10 @@ fun PostScreen(
         }
     }
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3)
-    ) { uris ->
-        selectedImages = uris
-    }
-
-    val videoPickerLauncher = rememberLauncherForActivityResult(
+    val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        selectedVideo = uri
+        selectedImageUri = uri
     }
 
     val activityTypeMap = mapOf(
@@ -274,7 +268,7 @@ fun PostScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    "Adicionar Mídia",
+                    "Adicionar Foto",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -286,7 +280,7 @@ fun PostScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            photoPickerLauncher.launch(
+                            imagePickerLauncher.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
                         },
@@ -295,44 +289,15 @@ fun PostScreen(
                     ) {
                         Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Fotos (${selectedImages.size}/3)")
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            videoPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (selectedVideo != null) "Vídeo (1)" else "Vídeo")
+                        Text("Foto")
                     }
                 }
 
-                if (selectedImages.isNotEmpty() || selectedVideo != null) {
+                if (selectedImageUri != null) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp)
-                    ) {
-                        items(selectedImages) { uri ->
-                            MediaPreviewItem(uri = uri) {
-                                selectedImages = selectedImages - uri
-                            }
-                        }
-
-                        if (selectedVideo != null) {
-                            item {
-                                VideoPreviewItem(uri = selectedVideo!!) {
-                                    selectedVideo = null
-                                }
-                            }
-                        }
+                    MediaPreviewItem(uri = selectedImageUri!!) {
+                        selectedImageUri = null
                     }
                 }
 
@@ -354,13 +319,13 @@ fun PostScreen(
                             val locationString = currentLocation?.let {
                                 "${it.latitude},${it.longitude}"
                             }
-                            createPostViewModel.createPost(
+                            createPostViewModel.createPostWithImageUpload(
                                 title = title.ifBlank { activityType },
                                 activityType = mappedActivityType,
                                 body = description.ifBlank { null },
-                                imageUrl = null,
                                 location = locationString,
-                                groupId = groupId
+                                groupId = groupId,
+                                imageUri = selectedImageUri
                             )
                         }
                     },
