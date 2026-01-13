@@ -7,9 +7,11 @@ import {
   DeleteObjectCommand,
   PutBucketPolicyCommand,
   CreateBucketCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 import { StorageProvider } from './interface/storage.provider';
+import { Readable } from 'stream';
 
 @Injectable()
 export class S3StorageProvider implements StorageProvider, OnModuleInit {
@@ -83,7 +85,7 @@ export class S3StorageProvider implements StorageProvider, OnModuleInit {
     const endpoint =
       this.configService.get<string>('AWS_PUBLIC_URL') ||
       this.configService.get<string>('AWS_ENDPOINT');
-    return `${endpoint}/${this.bucket}/${uniqueName}`;
+    return `${endpoint}/storage/files/${uniqueName}`;
   }
 
   async deleteFile(path: string): Promise<void> {
@@ -96,4 +98,38 @@ export class S3StorageProvider implements StorageProvider, OnModuleInit {
       }),
     );
   }
+
+  async getFile(key: string): Promise<{ buffer: Buffer; contentType: string }> {
+    const res = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+
+    const body = res.Body;
+
+    if (!body) {
+      throw new Error('Empty body');
+    }
+    const stream = body as Readable;
+
+    const buffer = await streamToBuffer(stream);
+
+    return {
+      buffer,
+      contentType: res.ContentType || 'application/octet-stream',
+    };
+  }
+}
+
+function streamToBuffer(stream: Readable): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    stream.on('data', (chunk: unknown) => {
+      if (Buffer.isBuffer(chunk)) chunks.push(chunk);
+      else chunks.push(Buffer.from(chunk as Uint8Array));
+    });
+
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
 }
