@@ -8,7 +8,13 @@ import {
   FileTypeValidator,
   HttpCode,
   HttpStatus,
+  Get,
+  Param,
+  NotFoundException,
+  StreamableFile,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageProvider } from 'src/shared/container/providers/storage/interface/storage.provider';
 
@@ -40,5 +46,22 @@ export class StorageController {
       message: 'Upload realizado com sucesso',
       url: url,
     };
+  }
+
+  @Get('files/:key')
+  async getFile(
+    @Param('key') key: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    try {
+      const file = await this.storageProvider.getFile(key);
+
+      res.set('Content-Type', file.contentType);
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+
+      return new StreamableFile(file.buffer);
+    } catch {
+      throw new NotFoundException('Arquivo não encontrado');
+    }
   }
 }

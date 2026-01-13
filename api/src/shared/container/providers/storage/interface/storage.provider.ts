@@ -5,4 +5,7 @@ export abstract class StorageProvider {
     mimeType: string,
   ): Promise<string>;
   abstract deleteFile(path: string): Promise<void>;
+  abstract getFile(
+    key: string,
+  ): Promise<{ buffer: Buffer; contentType: string }>;
 }
