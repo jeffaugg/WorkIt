@@ -9,9 +9,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import pies3.workit.data.api.AuthApi
 import pies3.workit.data.api.GroupApi
 import pies3.workit.data.api.PostApi
+import pies3.workit.data.api.StorageApi
 import pies3.workit.data.api.UserApi
 import pies3.workit.data.interceptors.AuthInterceptor
 import pies3.workit.data.repository.PostsRepository
+import pies3.workit.data.repository.StorageRepository
 import pies3.workit.data.repository.UserRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -22,7 +24,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://workit-api.danyelgranzotti.com/"
+    private const val BASE_URL = "http://workit-api.danyelgranzotti.com/"
 
     @Provides
     @Singleton
@@ -92,4 +94,12 @@ object NetworkModule {
     fun providePostsRepository(postApi: PostApi): PostsRepository {
         return PostsRepository(postApi)
     }
+
+    @Provides
+    @Singleton
+    fun provideStorageApi(retrofit: Retrofit): StorageApi {
+        return retrofit.create(StorageApi::class.java)
+    }
+
+
 }

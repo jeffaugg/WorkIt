@@ -1,5 +1,6 @@
 package pies3.workit.ui.features.post
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,11 +12,13 @@ import kotlinx.coroutines.launch
 import pies3.workit.data.dto.post.PostResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.PostsRepository
+import pies3.workit.data.repository.StorageRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class CreatePostViewModel @Inject constructor(
     private val postsRepository: PostsRepository,
+    private val storageRepository: StorageRepository,
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
@@ -35,7 +38,6 @@ class CreatePostViewModel @Inject constructor(
                 _createPostState.value = CreatePostUiState.Loading
 
                 val userId = tokenManager.getUserId()
-
                 if (userId == null) {
                     Log.e("CreatePostViewModel", "UserId é null - usuário não autenticado")
                     _createPostState.value = CreatePostUiState.Error("Usuário não autenticado")
@@ -52,15 +54,72 @@ class CreatePostViewModel @Inject constructor(
                     userId = userId
                 )
 
-                _createPostState.value = when {
-                    result.isSuccess -> CreatePostUiState.Success(result.getOrThrow())
-                    else -> {
-                        Log.e("CreatePostViewModel", "Erro ao criar publicação: ${result.exceptionOrNull()?.message}")
-                        CreatePostUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar publicação")
-                    }
+                _createPostState.value = if (result.isSuccess) {
+                    CreatePostUiState.Success(result.getOrThrow())
+                } else {
+                    Log.e("CreatePostViewModel", "Erro ao criar publicação: ${result.exceptionOrNull()?.message}")
+                    CreatePostUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar publicação")
                 }
             } catch (e: Exception) {
                 Log.e("CreatePostViewModel", "Exception ao criar publicação", e)
+                _createPostState.value = CreatePostUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    fun createPostWithImageUpload(
+        title: String,
+        activityType: String,
+        body: String?,
+        location: String?,
+        groupId: String,
+        imageUri: Uri?
+    ) {
+        viewModelScope.launch {
+            try {
+                _createPostState.value = CreatePostUiState.Loading
+
+                val userId = tokenManager.getUserId()
+                if (userId == null) {
+                    Log.e("CreatePostViewModel", "UserId é null - usuário não autenticado")
+                    _createPostState.value = CreatePostUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val imageUrl: String? = if (imageUri != null) {
+                    val uploadResult = storageRepository.uploadImage(imageUri)
+
+                    if (uploadResult.isFailure) {
+                        Log.e("CreatePostViewModel", "Erro ao enviar imagem: ${uploadResult.exceptionOrNull()?.message}")
+                        _createPostState.value = CreatePostUiState.Error(
+                            uploadResult.exceptionOrNull()?.message ?: "Erro ao enviar imagem"
+                        )
+                        return@launch
+                    }
+
+                    uploadResult.getOrNull()
+                } else {
+                    null
+                }
+
+                val result = postsRepository.createPost(
+                    title = title,
+                    activityType = activityType,
+                    body = body,
+                    imageUrl = imageUrl,
+                    location = location,
+                    groupId = groupId,
+                    userId = userId
+                )
+
+                _createPostState.value = if (result.isSuccess) {
+                    CreatePostUiState.Success(result.getOrThrow())
+                } else {
+                    Log.e("CreatePostViewModel", "Erro ao criar publicação: ${result.exceptionOrNull()?.message}")
+                    CreatePostUiState.Error(result.exceptionOrNull()?.message ?: "Erro ao criar publicação")
+                }
+            } catch (e: Exception) {
+                Log.e("CreatePostViewModel", "Exception no upload/criação do post", e)
                 _createPostState.value = CreatePostUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
