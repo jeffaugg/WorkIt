@@ -13,7 +13,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupsService } from './groups.service';
 
-type AuthRequest = Request & { user: { id: string } };
+type AuthRequest = Request & { userId: string };
 
 @ApiBearerAuth('JWT-auth')
 @ApiTags('groups')
@@ -23,7 +23,7 @@ export class GroupsController {
 
   @Post()
   create(@Body() createGroupDto: CreateGroupDto, @Req() req: AuthRequest) {
-    return this.groupsService.create(createGroupDto, req.user.id);
+    return this.groupsService.create(createGroupDto, req.userId);
   }
 
   @Get()
