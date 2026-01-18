@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation("com.google.android.gms:play-services-location:21.1.0")
 
 

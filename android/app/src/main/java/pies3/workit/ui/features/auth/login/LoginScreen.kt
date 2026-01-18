@@ -159,12 +159,6 @@ fun LoginContent(
                 }
             )
 
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                TextButton(onClick = { /* TODO */ }) {
-                    Text(text = "Esqueceu a senha?", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
