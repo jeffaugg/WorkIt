@@ -21,6 +21,7 @@ export class UsersService {
       id: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       groups: user.groups.map((g) => ({
@@ -43,13 +44,14 @@ export class UsersService {
     });
 
     if (!user) {
-      return null; 
+      return null;
     }
 
     return {
       id: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       groups: user.groups.map((g) => ({
