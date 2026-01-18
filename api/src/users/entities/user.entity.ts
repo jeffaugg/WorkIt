@@ -22,6 +22,9 @@ export class User {
   password: string;
 
   @ApiProperty()
+  avatarUrl: string;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()

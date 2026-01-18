@@ -17,6 +17,7 @@ import {
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageProvider } from 'src/shared/container/providers/storage/interface/storage.provider';
+import { isPublic } from 'src/shared/decorators/isPublic';
 
 @Controller('storage')
 export class StorageController {
@@ -48,6 +49,7 @@ export class StorageController {
     };
   }
 
+  @isPublic()
   @Get('files/:key')
   async getFile(
     @Param('key') key: string,
