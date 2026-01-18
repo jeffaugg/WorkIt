@@ -1,9 +1,13 @@
 package pies3.workit
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,13 +17,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,13 +44,26 @@ import pies3.workit.ui.features.splash.SplashScreen
 import pies3.workit.ui.navigation.BottomBarScreen
 import pies3.workit.ui.navigation.Screen
 import pies3.workit.ui.navigation.bottomNavItems
+import pies3.workit.ui.notifications.NotificationScheduler
 import pies3.workit.ui.theme.WorkItTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            NotificationScheduler.scheduleDailyReminder(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        checkAndRequestNotificationPermission()
+
         setContent {
             val navController = rememberNavController()
 
@@ -142,7 +158,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(BottomBarScreen.Feed.route) { backStackEntry ->
                             val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("refresh") ?: false
-                            
+
                             FeedScreen(
                                 onPostClick = { postId ->
                                     navController.navigate(Screen.PostDetail.createRoute(postId))
@@ -170,7 +186,7 @@ class MainActivity : ComponentActivity() {
                             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
                             val groupName = backStackEntry.arguments?.getString("groupName") ?: ""
                             val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("refresh") ?: false
-                            
+
                             GroupFeedScreen(
                                 groupId = groupId,
                                 groupName = groupName,
@@ -261,6 +277,24 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun checkAndRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    NotificationScheduler.scheduleDailyReminder(this)
+                }
+                else -> {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            NotificationScheduler.scheduleDailyReminder(this)
         }
     }
 }
