@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupsService } from './groups.service';
+
+type AuthRequest = Request & { user: { id: string } };
 
 @ApiBearerAuth('JWT-auth')
 @ApiTags('groups')
@@ -19,8 +22,8 @@ export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
-  create(@Body() createGroupDto: CreateGroupDto) {
-    return this.groupsService.create(createGroupDto);
+  create(@Body() createGroupDto: CreateGroupDto, @Req() req: AuthRequest) {
+    return this.groupsService.create(createGroupDto, req.user.id);
   }
 
   @Get()
