@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import pies3.workit.data.dto.user.UserResponse
 import pies3.workit.data.local.TokenManager
+import pies3.workit.data.repository.StorageRepository
 import pies3.workit.data.repository.UserRepository
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -20,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val tokenManager: TokenManager,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val storageRepository: StorageRepository
 ) : ViewModel() {
 
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Loading)
@@ -150,7 +152,51 @@ class ProfileViewModel @Inject constructor(
             "Membro desde ${createdAt.substring(0, 10)}"
         }
     }
+
+    fun updateProfilePhotoWithUpload(photoUri: Uri) {
+        viewModelScope.launch {
+            try {
+                _updateState.value = UpdateProfileState.Loading
+
+                val userId = tokenManager.getUserId()
+                if (userId == null) {
+                    _updateState.value = UpdateProfileState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val uploadResult = storageRepository.uploadImage(photoUri)
+                if (uploadResult.isFailure) {
+                    _updateState.value = UpdateProfileState.Error(
+                        uploadResult.exceptionOrNull()?.message ?: "Erro ao enviar imagem"
+                    )
+                    return@launch
+                }
+
+                val imageUrl = uploadResult.getOrNull()
+                if (imageUrl.isNullOrBlank()) {
+                    _updateState.value = UpdateProfileState.Error("URL retornou vazia")
+                    return@launch
+                }
+
+                val result = userRepository.updateUser(userId = userId, avatarUrl = imageUrl)
+
+                if (result.isSuccess) {
+                    loadProfile()
+                    _updateState.value = UpdateProfileState.Success
+                } else {
+                    _updateState.value = UpdateProfileState.Error(
+                        result.exceptionOrNull()?.message ?: "Erro ao atualizar foto do perfil"
+                    )
+                }
+            } catch (e: Exception) {
+                _updateState.value = UpdateProfileState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
 }
+
+
 
 sealed class ProfileState {
     object Loading : ProfileState()

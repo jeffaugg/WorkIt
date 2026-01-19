@@ -1,22 +1,17 @@
 package pies3.workit.ui.features.profile.components
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 
 @Composable
 fun ProfileHeader(
@@ -25,24 +20,52 @@ fun ProfileHeader(
     description: String,
     memberSince: String,
     initials: String,
+    photoUrl: String?,
+    onChangePhotoClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Surface(
-            shape = MaterialTheme.shapes.small,
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.size(80.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = initials,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.DarkGray
-                )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        if (!photoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(80.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.DarkGray
+                    )
+                }
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Botão trocar foto
+        OutlinedButton(
+            onClick = onChangePhotoClick,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text("Trocar foto")
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = name,
             style = MaterialTheme.typography.titleLarge,
@@ -54,6 +77,7 @@ fun ProfileHeader(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
@@ -61,6 +85,7 @@ fun ProfileHeader(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
         )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Surface(
@@ -77,12 +102,11 @@ fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         OutlinedButton(
             onClick = onEditClick,
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Edit Profile")
+            Text("Editar Perfil")
         }
-   }
+    }
 }

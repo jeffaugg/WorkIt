@@ -49,15 +49,11 @@ fun GroupsScreen(
 
     if (showDialog) {
         CreateGroupDialog(
-            onDismiss = {
-                if (createGroupState !is CreateGroupUiState.Loading) {
-                    showDialog = false
-                }
-            },
-            onCreate = { name, desc, uri ->
-                viewModel.createGroup(name, desc, null)
-            },
-            isLoading = createGroupState is CreateGroupUiState.Loading
+            onDismiss = { showDialog = false },
+            isLoading = createGroupState is CreateGroupUiState.Loading,
+            onCreate = { name, description, uri ->
+                viewModel.createGroupWithImageUpload(name, description, uri)
+            }
         )
     }
 
