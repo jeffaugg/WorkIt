@@ -1,5 +1,6 @@
 package pies3.workit.ui.features.groups
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +14,7 @@ import pies3.workit.data.dto.group.GroupListResponse
 import pies3.workit.data.dto.group.JoinGroupResponse
 import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.GroupsRepository
+import pies3.workit.data.repository.StorageRepository
 import pies3.workit.data.repository.UserRepository
 import javax.inject.Inject
 
@@ -20,6 +22,7 @@ import javax.inject.Inject
 class GroupsViewModel @Inject constructor(
     private val groupsRepository: GroupsRepository,
     private val userRepository: UserRepository,
+    private val storageRepository: StorageRepository,
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
@@ -306,13 +309,84 @@ class GroupsViewModel @Inject constructor(
             }
         }
     }
+    fun createGroupWithImageUpload(
+        name: String,
+        description: String,
+        imageUri: Uri?
+    ) {
+        viewModelScope.launch {
+            try {
+                _createGroupState.value = CreateGroupUiState.Loading
+
+                val userId = tokenManager.getUserId()
+                if (userId == null) {
+                    _createGroupState.value = CreateGroupUiState.Error("Usuário não autenticado")
+                    return@launch
+                }
+
+                val imageUrl: String? = if (imageUri != null) {
+                    val upload = storageRepository.uploadImage(imageUri)
+                    if (upload.isFailure) {
+                        _createGroupState.value = CreateGroupUiState.Error(
+                            upload.exceptionOrNull()?.message ?: "Erro ao enviar imagem"
+                        )
+                        return@launch
+                    }
+                    upload.getOrNull()
+                } else null
+
+                val result = groupsRepository.createGroup(
+                    name = name,
+                    description = description,
+                    imageUrl = imageUrl
+                )
+
+                if (result.isFailure) {
+                    _createGroupState.value = CreateGroupUiState.Error(
+                        result.exceptionOrNull()?.message ?: "Erro ao criar grupo"
+                    )
+                    return@launch
+                }
+
+                val createdGroup = result.getOrThrow()
+
+                val join = groupsRepository.joinGroup(createdGroup.id, userId)
+                if (join.isFailure) {
+                    Log.e("GroupsViewModel", "Grupo criado mas falhou ao entrar: ${join.exceptionOrNull()?.message}")
+                }
+                refreshListsAfterCreate()
+
+                _createGroupState.value = CreateGroupUiState.Success(createdGroup)
+
+            } catch (e: Exception) {
+                _createGroupState.value = CreateGroupUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    private fun refreshListsAfterCreate() {
+        if (_myGroupsSearchQuery.value.isNotBlank()) {
+            searchMyGroups(_myGroupsSearchQuery.value)
+        } else {
+            loadMyGroups()
+        }
+
+        if (_searchQuery.value.isNotBlank()) {
+            searchGroups(_searchQuery.value)
+        } else {
+            loadExploreGroups()
+        }
+    }
+
+
 }
 
-sealed class CreateGroupUiState {
-    object Idle : CreateGroupUiState()
-    object Loading : CreateGroupUiState()
-    data class Success(val group: CreateGroupResponse) : CreateGroupUiState()
-    data class Error(val message: String) : CreateGroupUiState()
+
+sealed interface CreateGroupUiState {
+    data object Idle : CreateGroupUiState
+    data object Loading : CreateGroupUiState
+    data class Success(val group: CreateGroupResponse) : CreateGroupUiState
+    data class Error(val message: String) : CreateGroupUiState
 }
 
 sealed class GroupsUiState {

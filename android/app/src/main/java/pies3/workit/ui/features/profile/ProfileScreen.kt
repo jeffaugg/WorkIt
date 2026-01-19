@@ -1,6 +1,9 @@
 package pies3.workit.ui.features.profile
 
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pies3.workit.ui.features.profile.components.*
+import androidx.activity.result.PickVisualMediaRequest
 
 @Composable
 fun ProfileScreen(
@@ -40,6 +44,18 @@ fun ProfileScreen(
     var notifyGroupInvites by rememberSaveable { mutableStateOf(true) }
     var notifyWeeklyDigest by rememberSaveable { mutableStateOf(false) }
     var isSheetOpen by rememberSaveable { mutableStateOf(false) }
+
+    var selectedProfileImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        selectedProfileImageUri = uri
+        if (uri != null) {
+            viewModel.updateProfilePhotoWithUpload(uri)
+        }
+    }
+
 
     if (showEditModal) {
         LaunchedEffect(Unit) {
@@ -94,7 +110,6 @@ fun ProfileScreen(
             }
         )
     }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
@@ -136,7 +151,7 @@ fun ProfileScreen(
 
             is ProfileState.Success -> {
                 val user = state.user
-
+                println(user.avatarUrl)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -151,8 +166,15 @@ fun ProfileScreen(
                         description = "Corredor, amante dos esportes!",
                         memberSince = viewModel.formatMemberSince(user.createdAt),
                         initials = viewModel.getInitials(user.name),
+                        photoUrl = user.avatarUrl,
+                        onChangePhotoClick = {
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
                         onEditClick = { isSheetOpen = true }
                     )
+
 
                     ProfileSectionCard(title = "Aparência", icon = Icons.Outlined.Build) {
                         Text(

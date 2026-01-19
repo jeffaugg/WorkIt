@@ -4,6 +4,7 @@ data class UserResponse(
     val id: String,
     val email: String,
     val name: String,
+    val avatarUrl: String,
     val createdAt: String,
     val updatedAt: String,
     val groups: List<UserGroup>

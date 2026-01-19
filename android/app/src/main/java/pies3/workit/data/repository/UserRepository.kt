@@ -23,15 +23,17 @@ class UserRepository @Inject constructor(
 
     suspend fun updateUser(
         userId: String,
-        name: String,
-        email: String
+        name: String? = null,
+        email: String? = null,
+        avatarUrl: String? = null
     ): Result<UserResponse> {
         return try {
-            val request = UpdateUserRequest(name, email)
+            val request = UpdateUserRequest(name = name, email = email, avatarUrl = avatarUrl)
             val response = userApi.updateUser(userId, request)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
 }
