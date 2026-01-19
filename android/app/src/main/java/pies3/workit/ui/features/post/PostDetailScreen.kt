@@ -131,6 +131,7 @@ fun PostDetailScreen(
             }
             is PostDetailState.Success -> {
                 val post = state.post
+                val isOwner = state.isOwner
 
                 Column(
                     modifier = Modifier
@@ -193,7 +194,7 @@ fun PostDetailScreen(
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
-                            Divider()
+                            HorizontalDivider()
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
@@ -244,52 +245,54 @@ fun PostDetailScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                            if (isOwner) {
+                                Spacer(modifier = Modifier.height(20.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { onEditClick(postId) },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Editar")
-                                }
-
-                                Button(
-                                    onClick = { showDeleteDialog = true },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer
-                                    ),
-                                    enabled = deleteState !is PostDeleteState.Loading
-                                ) {
-                                    if (deleteState is PostDeleteState.Loading) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(18.dp),
-                                            color = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    } else {
+                                    OutlinedButton(
+                                        onClick = { onEditClick(postId) },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
                                         Icon(
-                                            Icons.Default.Delete,
+                                            Icons.Default.Edit,
                                             contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.onErrorContainer
+                                            modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            "Excluir",
-                                            color = MaterialTheme.colorScheme.onErrorContainer
-                                        )
+                                        Text("Editar")
+                                    }
+
+                                    Button(
+                                        onClick = { showDeleteDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer
+                                        ),
+                                        enabled = deleteState !is PostDeleteState.Loading
+                                    ) {
+                                        if (deleteState is PostDeleteState.Loading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                                tint = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                "Excluir",
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -9,12 +9,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import pies3.workit.data.dto.post.PostResponse
+import pies3.workit.data.local.TokenManager
 import pies3.workit.data.repository.PostsRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class EditPostViewModel @Inject constructor(
-    private val postsRepository: PostsRepository
+    private val postsRepository: PostsRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _postState = MutableStateFlow<PostDetailState>(PostDetailState.Loading)
@@ -28,10 +30,16 @@ class EditPostViewModel @Inject constructor(
             try {
                 _postState.value = PostDetailState.Loading
 
+                val currentUserId = tokenManager.getUserId()
                 val result = postsRepository.getPostById(postId)
 
                 _postState.value = when {
-                    result.isSuccess -> PostDetailState.Success(result.getOrThrow())
+                    result.isSuccess -> {
+                        val post = result.getOrThrow()
+                        val isOwner = post.user.id == currentUserId
+
+                        PostDetailState.Success(post, isOwner)
+                    }
                     else -> {
                         Log.e("EditPostViewModel", "Erro ao carregar post: ${result.exceptionOrNull()?.message}")
                         PostDetailState.Error(result.exceptionOrNull()?.message ?: "Erro ao carregar publicação")
